@@ -12,7 +12,7 @@ class OrganManager(Sofa.Core.Controller):
 
         self.ros_client = ros_client
         self.topic = roslibpy.Topic(self.ros_client, '/organ_data_topic', 'std_msgs/String')  # Sostituisci con il tipo giusto
-        self.topic.subscribe(self.createNewOrgan)
+        
 
 
     def createNewOrgan(self, msg):
@@ -54,6 +54,11 @@ class OrganManager(Sofa.Core.Controller):
         surf.addObject('BarycentricMapping', name="CollisionMapping", input="@../dofs", output="@spheres")
         
         print(f"Added organ {msg.id}")
+    
+    def onAnimateBeginEvent(self, event):
+        
+        self.topic.subscribe(self.createNewOrgan)
+        
 
     
 
