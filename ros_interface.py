@@ -15,10 +15,8 @@ class ROSInterface:
         :param message_type: Tipo di messaggio ROS (es. 'mesh_msgs/MeshGeometry')
         :param callback: Funzione di callback da eseguire quando arriva un messaggio
         """
-        if topic_name in self.subscribers:
-            print(f"⚠️ Warning: Il topic {topic_name} è già sottoscritto!")
-            return
         
         listener = roslibpy.Topic(self.ros, topic_name, message_type)
-        listener.subscribe(callback)
+
+        return listener
         

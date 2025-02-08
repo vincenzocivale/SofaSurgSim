@@ -12,14 +12,15 @@ class SOFASceneController:
         """
         self.root_node = Sofa.Core.Node("root")
         self.ros_interface = ros_interface
-        self.organ_manager = OrganManager()
+        self.organ_manager = OrganManager(ros_client=self.ros_interface.ros_client)
 
     def _create_scene(self):
         """
         Crea gli oggetti nella scena di SOFA utilizzando i dati iniziali ricevuti dai topic ROS.
         """
         self.root_node.addObject(self.organ_manager)
-        self.ros_interface.subscribe_to_topic("/mesh_topic", "topic_custom_da_creare_ancora", self.organ_manager.createNewOrgan)
+        
+
 
     def run_simulation(self):
         """
