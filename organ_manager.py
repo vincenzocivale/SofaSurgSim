@@ -11,8 +11,8 @@ class OrganManager(Sofa.Core.Controller):
         Sofa.Core.Controller.__init__(self, *args, **kwargs)
 
         self.ros_client = ros_client
-        # self.topic = roslibpy.Topic(self.ros_client, '/organ_data_topic', 'std_msgs/String')  # Sostituisci con il tipo giusto
-        # self.topic.subscribe(self.createNewOrgan)
+        self.topic = roslibpy.Topic(self.ros_client, '/organ_data_topic', 'std_msgs/String')  # Sostituisci con il tipo giusto
+        self.topic.subscribe(self.createNewOrgan)
 
 
     def createNewOrgan(self, msg):

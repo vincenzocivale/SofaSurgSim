@@ -3,19 +3,22 @@ import Sofa
 import SofaRuntime
 import Sofa.Gui
 import numpy as np
-from ros_interface import ROSInterface
+import roslibpy
 from organ_manager import OrganManager
     
 
 class SOFASceneController:
-    def __init__(self, ros_interface: ROSInterface, gui: bool):
+    def __init__(self, ros_ip, GUI: bool):
         """
         :param ros_interface: istanza della classe ROSInterface che fornisce i dati ROS
         """
         self.root_node = Sofa.Core.Node("root")
-        self.gui = gui
-        self.ros_interface = ros_interface
-        self.organ_manager = OrganManager(ros_client=self.ros_interface.ros_client)
+       
+        self.ros_client = roslibpy.Ros(host=ros_ip, port=9090)
+        self.ros_client.run()
+
+        self.GUI = GUI
+        self.organ_manager = OrganManager(ros_client=self.ros_client)
 
     def _create_scene(self):
         """
@@ -30,7 +33,7 @@ class SOFASceneController:
         """
         self._create_scene()
         Sofa.Simulation.init(self.root_node)
-        if not self.gui:
+        if not self.GUI:
             while True:
                 Sofa.Simulation.animate(self.root_node, self.root_node.dt.value) 
         
