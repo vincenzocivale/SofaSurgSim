@@ -17,7 +17,7 @@ class SOFASceneController:
         self.root_node = Sofa.Core.Node("root")
         self.cfg = base_config.BaseConfig()
         self.GUI = GUI
-        self.organ_manager = OrganManager(ros_client)
+        self.organ_manager = OrganManager(ros_client=ros_client)
 
     def _create_scene(self):
         """
