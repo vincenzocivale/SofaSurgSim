@@ -1,22 +1,40 @@
 #!/usr/bin/env python
 import roslibpy
 
-class ROSInterface:
+class ROSClient:
     def __init__(self, host='localhost', port=9090):
-        # Initialize the connection to ROS
-        self.ros_client = roslibpy.Ros(host=host, port=port)
-        self.ros_client.run()
-        
-    def subscribe_to_topic(self, topic_name, message_type, callback):
-        """
-        Sottoscrive un nuovo topic ROS dinamicamente.
-        
-        :param topic_name: Nome del topic ROS da sottoscrivere (es. '/mesh_topic')
-        :param message_type: Tipo di messaggio ROS (es. 'mesh_msgs/MeshGeometry')
-        :param callback: Funzione di callback da eseguire quando arriva un messaggio
-        """
-        
-        listener = roslibpy.Topic(self.ros, topic_name, message_type)
+        self.client = roslibpy.Ros(host=host, port=port)
+        self.publishers = {}
+        self.subscribers = {}
 
-        return listener
+    def connect(self):
+        self.client.run()
+        print(f'Connected: {self.client.is_connected}')
+
+    def create_publisher(self, topic_name, msg_type):
+        publisher = roslibpy.Topic(
+            self.client,
+            topic_name,
+            msg_type,
+            queue_size=10
+        )
+        publisher.advertise()
+        self.publishers[topic_name] = publisher
+        return publisher
+
+    def create_subscriber(self, topic_name, msg_type, callback):
+        subscriber = roslibpy.Topic(
+            self.client,
+            topic_name,
+            msg_type,
+            queue_size=10
+        )
+        subscriber.subscribe(callback)
+        self.subscribers[topic_name] = subscriber
+        return subscriber
+
+    def disconnect(self):
+        for pub in self.publishers.values():
+            pub.unadvertise()
+        self.client.close()
         
