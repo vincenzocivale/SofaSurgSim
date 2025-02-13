@@ -6,3 +6,5 @@ def main():
     sofa_scene_controller = SOFASceneController(ros_interface)
     sofa_scene_controller.run_simulation()
     
+if __name__ == "__main__":
+    main()
