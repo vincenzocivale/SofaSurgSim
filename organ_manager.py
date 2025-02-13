@@ -13,7 +13,8 @@ class OrganManager(Sofa.Core.Controller):
         Sofa.Core.Controller.__init__(self, *args, **kwargs)
 
         self.ros_client = ros_client
-        self.ros_client.create_subscriber('/organs', 'ros_sofa_bridge_msgs/Organ', self.createNewOrgan)
+        self.topic = roslibpy.Topic(self.ros_client, '/organ_data_topic', 'std_msgs/String')  # Sostituisci con il tipo giusto
+        self.topic.subscribe(self.createNewOrgan)
 
 
     def createNewOrgan(self, msg):
@@ -46,6 +47,8 @@ class OrganManager(Sofa.Core.Controller):
         surf.addObject('SphereCollisionModel', name="CollisionModel")
         surf.addObject('BarycentricMapping', name="CollisionMapping", input="@../dofs", output="@spheres")
         
+        print(f"Added organ {msg.id}")
+
     
 
 
