@@ -5,6 +5,7 @@ import numpy as np
 
 from sofasurgsim.msg.Organ import Organ
 from sofasurgsim.interfaces.ros_interface import ROSClient
+from config import base_config
 
 
 class OrganManager(Sofa.Core.Controller):
@@ -14,11 +15,13 @@ class OrganManager(Sofa.Core.Controller):
         # Inizializzazione connessione ROS
         self.ros_client = ros_client
         self.ros_client.connect()
+
+        self.bs = base_config.BaseConfig()
         
         # Sottoscrizione al topic ROS
         self.ros_client.create_subscriber(
-            '/organs', 
-            'ros_sofa_bridge_msgs/Organ', 
+            self.bs.ORGAN_TOPIC, 
+            self.bs.ORGAN_TOPIC_TYPE, 
             self.createNewOrgan
         )
         
