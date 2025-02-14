@@ -58,7 +58,7 @@ class SOFASceneController:
             import time
             while True:
                 Sofa.Simulation.animate(self.root_node, self.root_node.dt.value)
-                time.sleep(0.01)  # Per evitare consumo CPU al 100%
+                time.sleep(0.01) 
         else:
             Sofa.Gui.GUIManager.Init("main", "qglviewer")
             Sofa.Gui.GUIManager.createGUI(self.root_node)
