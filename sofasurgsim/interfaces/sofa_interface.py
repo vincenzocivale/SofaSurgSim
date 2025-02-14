@@ -17,6 +17,11 @@ class SOFASceneController:
         self.ros_client = ros_client
         self.root_node.dt.value = self.cfg.SIMULATION_STEP 
 
+        self.organ_manager = self.root.addObject(OrganManager(
+            ros_client=self.ros_client,
+            name="OrganManager"
+        ))
+
     def _create_scene(self):
         """
         Crea gli oggetti nella scena di SOFA utilizzando i dati iniziali ricevuti dai topic ROS.
