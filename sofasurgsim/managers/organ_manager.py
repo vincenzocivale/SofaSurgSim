@@ -39,7 +39,6 @@ class OrganManager(Sofa.Core.Controller):
         newOrgan.addObject('TetrahedralCorotationalFEMForceField', template="Vec3d", name="FEM", method="large", poissonRatio=0.3, youngModulus=3000, computeGlobalMatrix=False)
         
         visu = newOrgan.addChild('Visu')
-        visu.addObject('OglModel', name="VisualModel", position=organObject.mesh.vertices, color=[1, 0, 0, 1])
         visu.addObject('BarycentricMapping', name="VisualMapping", input="@../dofs", output="@VisualModel")
         
         surf = newOrgan.addChild('Surf')
@@ -47,7 +46,16 @@ class OrganManager(Sofa.Core.Controller):
         surf.addObject('SphereCollisionModel', name="CollisionModel")
         surf.addObject('BarycentricMapping', name="CollisionMapping", input="@../dofs", output="@spheres")
         
-        print(f"Added organ {msg.id}")
+        # Converti i vertici in formato SOFA
+        vertices = np.array(organObject.mesh.vertices).reshape(-1, 3)
+        
+        # Modifica la creazione della topologia
+        newOrgan.addObject('TriangleSetTopologyContainer', 
+                        name="topo", 
+                        triangles=organObject.mesh.triangles,
+                        position=vertices)
+        
+        
 
     
 
