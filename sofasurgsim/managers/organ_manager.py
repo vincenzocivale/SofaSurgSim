@@ -1,3 +1,4 @@
+import logging
 import Sofa
 import Sofa.Core
 import Sofa.Simulation
@@ -7,98 +8,64 @@ from sofasurgsim.msg.Organ import Organ
 from sofasurgsim.interfaces.ros_interface import ROSClient
 from config import base_config
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class OrganManager(Sofa.Core.Controller):
     def __init__(self, *args, ros_client: ROSClient, **kwargs):
-        Sofa.Core.Controller.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         
-        # Inizializzazione connessione ROS
         self.ros_client = ros_client
-
         self.bs = base_config.BaseConfig()
+        self.created_organs = {}
         
         self.ros_client.create_subscriber(
             self.bs.ORGAN_TOPIC, 
             self.bs.ORGAN_TOPIC_TYPE, 
-            self.createNewOrgan
+            self.create_new_organ
         )
-        
-        # Dizionario per tenere traccia degli organi creati
-        self.created_organs = {}
 
-    def createNewOrgan(self, msg):
-
-        """Crea un nuovo organo dalla ROS message"""
+    def create_new_organ(self, msg):
+        """Creates a new organ from a ROS message."""
         try:
-            # Converti il messaggio ROS in un oggetto Organ
             organ = Organ.from_dict(msg)
             
-            # Verifica che l'organo non esista già
             if organ.id in self.created_organs:
-                print(f"Organo {organ.id} già esistente!")
+                logger.warning(f"Organ {organ.id} already exists!")
                 return
 
             root = self.getContext()
-            
-            # Crea il nodo per il nuovo organo
             new_organ = root.addChild(organ.id)
-            
-            # Converti i vertici in formato numpy array
+
             vertices = np.array([[v.x, v.y, v.z] for v in organ.mesh.vertices], dtype=np.float32)
             triangles = np.array([t.vertex_indices for t in organ.mesh.triangles], dtype=np.uint32)
-
-
             
-            # Aggiungi componenti SOFA
             new_organ.addObject('EulerImplicitSolver', name="odesolver")
             new_organ.addObject('CGLinearSolver', name="linear_solver", iterations=100)
             
-            # Topologia e geometria
-            new_organ.addObject('MechanicalObject', 
-                              name="dofs", 
-                              position=vertices.tolist())
+            new_organ.addObject('MechanicalObject', name="dofs", position=vertices.tolist())
+            new_organ.addObject('TriangleSetTopologyContainer', name="topology", triangles=triangles.tolist(), position=vertices.tolist())
+            new_organ.addObject('TetrahedralCorotationalFEMForceField', youngModulus=3000, poissonRatio=0.3)
             
-            new_organ.addObject('TriangleSetTopologyContainer',
-                              name="topology", 
-                              triangles=triangles.tolist(),
-                              position=vertices.tolist())
-            
-            new_organ.addObject('TetrahedralCorotationalFEMForceField',
-                              youngModulus=3000,
-                              poissonRatio=0.3)
-            
-            # Componenti di visualizzazione
             self._add_visual_components(new_organ, vertices, triangles)
-            
-            # Componenti di collisione
             self._add_collision_components(new_organ)
             
-            # Registra l'organo creato
             self.created_organs[organ.id] = new_organ
-            print(f"Organo {organ.id} creato con successo!")
-
+            logger.info(f"Organ {organ.id} successfully created!")
+        
         except Exception as e:
-            print(f"Errore nella creazione dell'organo: {str(e)}")
+            logger.error(f"Error creating organ: {str(e)}", exc_info=True)
 
     def _add_visual_components(self, node, vertices, triangles):
-        """Aggiungi componenti per la visualizzazione 3D"""
+        """Adds components for 3D visualization."""
         visu = node.addChild("Visual")
-        visu.addObject('OglModel', 
-                      name="VisualModel",
-                      position=vertices.tolist(),
-                      triangles=triangles,
-                      color=[1.0, 0.5, 0.5, 1.0])
-        visu.addObject('BarycentricMapping', 
-                      input="@../dofs",
-                      output="@VisualModel")
+        visu.addObject('OglModel', name="VisualModel", position=vertices.tolist(), triangles=triangles, color=[1.0, 0.5, 0.5, 1.0])
+        visu.addObject('BarycentricMapping', input="@../dofs", output="@VisualModel")
 
     def _add_collision_components(self, node):
-        """Aggiungi componenti per la rilevazione delle collisioni"""
+        """Adds components for collision detection."""
         collision = node.addChild("Collision")
         collision.addObject('MechanicalObject', name="collision_dofs")
-        collision.addObject('SphereCollisionModel', 
-                           radii=0.5,  # Regola in base alle necessità
-                           name="CollisionModel")
-        collision.addObject('BarycentricMapping', 
-                           input="@../dofs",
-                           output="@collision_dofs")
+        collision.addObject('SphereCollisionModel', radii=0.5, name="CollisionModel")
+        collision.addObject('BarycentricMapping', input="@../dofs", output="@collision_dofs")
