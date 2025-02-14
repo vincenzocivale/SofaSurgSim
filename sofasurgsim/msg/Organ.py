@@ -77,7 +77,7 @@ class Organ:
         orientation_data = pose_data['orientation']
         position = Point( x=position_data['x'], y=position_data['y'], z=position_data['z'])
         orientation = Quaternion(x=orientation_data['x'], y=orientation_data['y'], z=orientation_data['z'], w=orientation_data['w'])
-        pose = Pose(postion=position, orientation=orientation)
+        pose = Pose(position=position, orientation=orientation)
 
         # Ricostruzione dell'oggetto Mesh
         triangles = []

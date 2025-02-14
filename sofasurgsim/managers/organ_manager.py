@@ -44,7 +44,10 @@ class OrganManager(Sofa.Core.Controller):
             new_organ = root.addChild(organ.id)
             
             # Converti i vertici in formato numpy array
-            vertices = np.array(organ.mesh.vertices).reshape(-1, 3)
+            vertices = np.array([[v.x, v.y, v.z] for v in organ.mesh.vertices], dtype=np.float32)
+            triangles = np.array([t.vertex_indices for t in organ.mesh.triangles], dtype=np.uint32)
+
+
             
             # Aggiungi componenti SOFA
             new_organ.addObject('EulerImplicitSolver', name="odesolver")
@@ -57,7 +60,7 @@ class OrganManager(Sofa.Core.Controller):
             
             new_organ.addObject('TriangleSetTopologyContainer',
                               name="topology", 
-                              triangles=organ.mesh.triangles,
+                              triangles=triangles.tolist(),
                               position=vertices.tolist())
             
             new_organ.addObject('TetrahedralCorotationalFEMForceField',
@@ -65,7 +68,7 @@ class OrganManager(Sofa.Core.Controller):
                               poissonRatio=0.3)
             
             # Componenti di visualizzazione
-            self._add_visual_components(new_organ, vertices, organ.mesh.triangles)
+            self._add_visual_components(new_organ, vertices, triangles)
             
             # Componenti di collisione
             self._add_collision_components(new_organ)
