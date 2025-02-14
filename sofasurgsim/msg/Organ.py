@@ -75,14 +75,19 @@ class Organ:
         # Ricostruzione dell'oggetto Pose
         position_data = pose_data['position']
         orientation_data = pose_data['orientation']
-        position = Point(position_data['x'], position_data['y'], position_data['z'])
-        orientation = Quaternion(orientation_data['x'], orientation_data['y'], orientation_data['z'], orientation_data['w'])
-        pose = Pose(position, orientation)
+        position = Point( x=position_data['x'], y=position_data['y'], z=position_data['z'])
+        orientation = Quaternion(x=orientation_data['x'], y=orientation_data['y'], z=orientation_data['z'], w=orientation_data['w'])
+        pose = Pose(postion=position, orientation=orientation)
 
         # Ricostruzione dell'oggetto Mesh
-        triangles = [MeshTriangle(triangle['vertex_indices']) for triangle in mesh_data['triangles']]
-        vertices = [Point(vertex['x'], vertex['y'], vertex['z']) for vertex in mesh_data['vertices']]
-        mesh = Mesh(vertices, triangles)
+        triangles = []
+        for triangle in mesh_data['triangles']:
+            mesh_triangle = MeshTriangle()
+            mesh_triangle.vertex_indices = triangle['vertex_indices']
+            triangles.append(mesh_triangle)
+        
+        vertices = [Point(x=vertex['x'], y=vertex['y'], z=vertex['z']) for vertex in mesh_data['vertices']]
+        mesh = Mesh(vertices=vertices, triangles=triangles)
 
         # Creazione dell'oggetto Organ
         return Organ(organ_id, pose, mesh)

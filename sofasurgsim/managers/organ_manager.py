@@ -27,7 +27,7 @@ class OrganManager(Sofa.Core.Controller):
         self.created_organs = {}
 
     def createNewOrgan(self, msg):
-        print("Creazione nuovo organo...")
+
         """Crea un nuovo organo dalla ROS message"""
         try:
             # Converti il messaggio ROS in un oggetto Organ

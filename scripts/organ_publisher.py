@@ -4,6 +4,12 @@ from geometry_msgs.msg import Pose, Point
 from shape_msgs.msg import Mesh, MeshTriangle
 import time
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from config import base_config
+
 
 class Organ:
     """Classe che rappresenta un organo con ID, posizione e mesh."""
@@ -39,11 +45,13 @@ class Organ:
         return f"Organ(id={self.id}, pose={self.pose}, mesh={self.mesh})"
     
 def publish_organ():
+    config = base_config.BaseConfig()
+
     """Pubblica un oggetto Organ su un topic ROS usando roslibpy."""
-    client = roslibpy.Ros(host='localhost', port=9090)
+    client = roslibpy.Ros(host=config.ROS_HOST, port=9090)
     client.run()
 
-    topic = roslibpy.Topic(client, '/organ_topic', 'ros_sofa_bridge_msgs/Organ')
+    topic = roslibpy.Topic(client, config.ORGAN_TOPIC, config.ORGAN_TOPIC_TYPE)
 
     # Creazione dati di test
     organ_id = String(data="heart")
@@ -80,13 +88,15 @@ def publish_organ():
     message = roslibpy.Message(organ.to_dict())
 
     start_time = time.time()
-    while time.time() - start_time < 2000:
+    while time.time() - start_time < 200000000000:
         print("Publishing:", message)
         topic.publish(message)
         time.sleep(1)  # Pubblica ogni secondo
 
     client.terminate()
 
+
+       
 if __name__ == "__main__":
     publish_organ()
 
