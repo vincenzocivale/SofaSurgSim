@@ -2,6 +2,10 @@ import roslibpy
 import threading
 from queue import Queue
 from time import sleep
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class ROSClient:
     def __init__(self, host='localhost', port=9090):
@@ -12,34 +16,34 @@ class ROSClient:
         self.running = False
 
     def connect(self):
-        """Connette al server ROS"""
+        """Connect to the ROS server."""
         self.client.run()
         self.running = True
-        print(f'Connesso: {self.client.is_connected}')
+        logger.info(f'Connected: {self.client.is_connected}')
 
     def disconnect(self):
-        """Disconnette il client ROS e ferma i thread"""
+        """Disconnect from the ROS client and stop threads."""
         self.running = False
         for thread in self.publishing_threads.values():
-            thread.join()  # Attendi che i thread terminino
+            thread.join()  # Wait for threads to finish
         for pub in self.publishers.values():
             pub.unadvertise()
         self.client.close()
-        print("Disconnesso")
+        logger.info("Disconnected")
 
     def create_subscriber(self, topic_name, msg_type, callback):
         """
-        Crea un subscriber per un topic.
+        Create a subscriber for a topic.
         Args:
-            topic_name (str): Nome del topic
-            msg_type (str): Tipo del messaggio ROS
-            callback (function): Funzione da chiamare quando arriva un messaggio
+            topic_name (str): Topic name
+            msg_type (str): ROS message type
+            callback (function): Function to call when a message is received
         """
         def wrapped_callback(message):
             try:
                 callback(message)
             except Exception as e:
-                print(f"Errore nella callback del topic {topic_name}: {str(e)}")
+                logger.error(f"Error in callback for topic {topic_name}: {str(e)}")
 
         subscriber = roslibpy.Topic(
             self.client,
@@ -49,16 +53,16 @@ class ROSClient:
         )
         subscriber.subscribe(wrapped_callback)
         self.subscribers[topic_name] = subscriber
-        print(f"Sottoscritto a {topic_name}")
+        logger.info(f"Subscribed to {topic_name}")
 
     def create_publisher(self, topic_name, msg_type, data_generator, rate=10):
         """
-        Crea un publisher per un topic con un thread dedicato.
+        Create a publisher for a topic with a dedicated thread.
         Args:
-            topic_name (str): Nome del topic
-            msg_type (str): Tipo del messaggio ROS
-            data_generator (function): Funzione che genera i dati da pubblicare
-            rate (int): Frequenza di pubblicazione (Hz)
+            topic_name (str): Topic name
+            msg_type (str): ROS message type
+            data_generator (function): Function to generate data to publish
+            rate (int): Publishing rate (Hz)
         """
         publisher = roslibpy.Topic(
             self.client,
@@ -76,10 +80,10 @@ class ROSClient:
                     if data is not None:
                         publisher.publish(roslibpy.Message(data))
                 except Exception as e:
-                    print(f"Errore nella generazione dati per {topic_name}: {str(e)}")
+                    logger.error(f"Error in data generation for {topic_name}: {str(e)}")
                 sleep(1.0 / rate)
 
         thread = threading.Thread(target=publishing_loop, daemon=True)
         thread.start()
         self.publishing_threads[topic_name] = thread
-        print(f"Publisher attivo su {topic_name} a {rate} Hz")
+        logger.info(f"Publisher active on {topic_name} at {rate} Hz")

@@ -80,13 +80,13 @@ def publish_organ():
     message = roslibpy.Message(organ.to_dict())
 
     start_time = time.time()
-    while time.time() - start_time < 20:
+    while time.time() - start_time < 2000:
         print("Publishing:", message)
         topic.publish(message)
         time.sleep(1)  # Pubblica ogni secondo
 
     client.terminate()
 
-
 if __name__ == "__main__":
     publish_organ()
+

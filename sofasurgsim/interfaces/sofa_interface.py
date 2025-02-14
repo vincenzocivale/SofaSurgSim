@@ -17,7 +17,7 @@ class SOFASceneController:
         self.ros_client = ros_client
         self.root_node.dt.value = self.cfg.SIMULATION_STEP 
 
-        self.organ_manager = self.root.addObject(OrganManager(
+        self.organ_manager = self.root_node.addObject(OrganManager(
             ros_client=self.ros_client,
             name="OrganManager"
         ))
@@ -60,10 +60,8 @@ class SOFASceneController:
         Sofa.Simulation.init(self.root_node)
         
         if not self.GUI:
-            import time
             while True:
                 Sofa.Simulation.animate(self.root_node, self.root_node.dt.value)
-                time.sleep(0.01) 
         else:
             Sofa.Gui.GUIManager.Init("main", "qglviewer")
             Sofa.Gui.GUIManager.createGUI(self.root_node)
