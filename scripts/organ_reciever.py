@@ -1,4 +1,9 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import roslibpy
+import config.base_config as bc
 
 
 
@@ -33,8 +38,8 @@ def create_subscriber(client, topic_name, msg_type, callback):
 if __name__ == "__main__":
     client = roslibpy.Ros(host='localhost', port=9090)
     client.run()
-
-    create_subscriber(client, '/organ_topic', 'ros_sofa_bridge_msgs/Organ', callback)
+    config = bc.BaseConfig()
+    create_subscriber(client, config.ORGAN_TOPIC, config.ORGAN_TOPIC_TYPE, callback)
 
     try:
         while True:

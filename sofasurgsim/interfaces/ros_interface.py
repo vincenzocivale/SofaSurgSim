@@ -15,6 +15,9 @@ class ROSClient:
         self.publishing_threads = {}
         self.running = False
 
+        # create a subscriber to visualize rosbridge log messages
+        self.create_subscriber('/rosout', 'rosgraph_msgs/Log', self._log_callback)
+
     def connect(self):
         """Connect to the ROS server."""
         self.client.run()
@@ -87,3 +90,18 @@ class ROSClient:
         thread.start()
         self.publishing_threads[topic_name] = thread
         logger.info(f"Publisher active on {topic_name} at {rate} Hz")
+    
+    def _log_callback(message):
+        log_levels = {
+            20: logging.INFO,
+            40: logging.ERROR
+        }
+
+        # Check if the message is from rosbridge_server, for example by checking the 'name' field
+        if 'rosbridge_websocket' in message.get('name', ''):
+            # The 'level' field indicates the log level (INFO, WARN, ERROR, etc.)
+            log_level = log_levels.get(message['level'], logging.DEBUG)
+            logger.log(log_level, message['msg'])
+        else:
+            # You can also handle other logs
+            pass
