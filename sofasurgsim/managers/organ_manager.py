@@ -47,7 +47,8 @@ class OrganManager(Sofa.Core.Controller):
             
             new_organ.addObject('MechanicalObject', name="dofs", position=vertices.tolist())
             new_organ.addObject('TriangleSetTopologyContainer', name="topology", triangles=triangles.tolist(), position=vertices.tolist())
-            new_organ.addObject('TetrahedralCorotationalFEMForceField', youngModulus=3000, poissonRatio=0.3)
+            new_organ.addObject('UniformMass', totalMass=1.0)  # Aggiunto
+            new_organ.addObject('TriangularFEMForceField', youngModulus=3000, poissonRatio=0.3)
             
             self._add_visual_components(new_organ, vertices, triangles)
             self._add_collision_components(new_organ)
@@ -68,5 +69,5 @@ class OrganManager(Sofa.Core.Controller):
         """Adds components for collision detection."""
         collision = node.addChild("Collision")
         collision.addObject('MechanicalObject', name="collision_dofs")
-        collision.addObject('SphereCollisionModel', radii=0.5, name="CollisionModel")
+        collision.addObject('PointCollisionModel', name="CollisionModel")
         collision.addObject('BarycentricMapping', input="@../dofs", output="@collision_dofs")
