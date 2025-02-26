@@ -33,13 +33,9 @@ class OrganManager(Sofa.Core.Controller):
         # Questo callback viene eseguito in un thread separato: mettiamo il messaggio in coda
         self.organ_queue.put(msg)
     
-    def updateGraph(self, node, dt):
-        """
-        Metodo chiamato durante il ciclo principale della simulazione.
-        Verifica se ci sono nuovi messaggi nella coda e aggiunge i relativi nodi.
-        """
-        print(f"updateGraph chiamato con dt={dt}", flush=True)
-        while not self.organ_queue.empty():
+    def onAnimateBeginEvent(self, dt):
+        # Questo metodo viene chiamato all'inizio di ogni ciclo di animazione
+        if not self.organ_queue.empty():
             msg = self.organ_queue.get()
             self.create_new_organ(msg)
     
@@ -90,3 +86,5 @@ class OrganManager(Sofa.Core.Controller):
         collision.addObject('MechanicalObject', name="collision_dofs")
         collision.addObject('PointCollisionModel', name="CollisionModel")
         collision.addObject('BarycentricMapping', input="@../dofs", output="@collision_dofs")
+
+

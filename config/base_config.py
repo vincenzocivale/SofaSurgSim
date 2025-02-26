@@ -11,7 +11,7 @@ class BaseConfig:
     
 
     # Parametri SOFA
-    GUI = False
+    GUI = True
     SOFA_SCENE_FILE = 'scenes/main_scene.py'
     SIMULATION_STEP = 0.01  # Secondi
 

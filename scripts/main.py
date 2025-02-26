@@ -16,13 +16,6 @@ def main():
     ros_client = ROSClient(cfg.ROS_HOST)
     ros_client.connect()
     
-    # Crea i subscriber prima dell'avvio della simulazione se vuoi che siano attivi fin da subito
-    ros_client.create_subscriber(
-        cfg.ORGAN_TOPIC,
-        cfg.ORGAN_TOPIC_TYPE,
-        callback
-    )
-    
     # Avvio della simulazione
     sofa_controller = SOFASceneController(ros_client, cfg.GUI)
     sofa_controller.run_simulation()
