@@ -56,6 +56,7 @@ class SOFASceneController:
         self.root_node.addObject('DiscreteIntersection')
 
     def run_simulation(self):
+        print("Avvio simulazione")
         self._create_scene()
         Sofa.Simulation.init(self.root_node)
         

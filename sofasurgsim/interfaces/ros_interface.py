@@ -16,7 +16,7 @@ class ROSClient:
         self.running = False
 
         # create a subscriber to visualize rosbridge log messages
-        self.create_subscriber('/rosout', 'rosgraph_msgs/Log', self._log_callback)
+        #self.create_subscriber('/rosout', 'rosgraph_msgs/Log', self._log_callback)
 
     def connect(self):
         """Connect to the ROS server."""
