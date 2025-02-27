@@ -52,20 +52,40 @@ class OrganManager(Sofa.Core.Controller):
             root = self.getContext()
             new_organ = root.addChild(organ.id)
 
+            vertices_struct = [[v.x, v.y, v.z] for v in organ.tetrahedral_mesh.vertices]
+            tetrahedra = new_organ.tetrahedral_mesh.tetrahedra
+            
+            new_organ.addObject('EulerImplicitSolver', name="cg_odesolver", rayleighStiffness="0.1", rayleighMass="0.1")
+            new_organ.addObject('CGLinearSolver', name="linear_solver", iterations="25", tolerance="1e-09", threshold="1e-09")
+            
+            # Topologia tetraedrica definita manualmente
+            new_organ.addObject('TetrahedronSetTopologyContainer', 
+                        name="topo",
+                        positions=vertices_struct,
+                        tetrahedra=tetrahedra)
+            
+            new_organ.addObject('MechanicalObject', name="dofs")
+            new_organ.addObject('TetrahedronSetGeometryAlgorithms', template="Vec3d", name="GeomAlgo")
+            new_organ.addObject('DiagonalMass', name="Mass", massDensity="1.0")
+            new_organ.addObject('TetrahedralCorotationalFEMForceField', 
+                        template="Vec3d", 
+                        name="FEM", 
+                        method="large", 
+                        poissonRatio="0.3", 
+                        youngModulus="3000")
+            new_organ.addObject('FixedProjectiveConstraint', name="FixedConstraint", indices="3 39 64")
+
             # Estraiamo i vertici e i triangoli dalla mesh
-            vertices = np.array([[v.x, v.y, v.z] for v in organ.mesh.vertices], dtype=np.float32)
-            triangles = np.array([t.vertex_indices for t in organ.mesh.triangles], dtype=np.uint32)
+            surface_vertices = [[v.x, v.y, v.z] for v in organ.surface.vertices]
+            surface_triangles = [t.vertex_indices for t in organ.surface.triangles]
+
+            liver_surface = root.addChild(f"{organ.id}_surface")
+            liver_surface.addObject('MeshTopology', 
+                                name="mesh",
+                                positions= surface_vertices,
+                                triangles= surface_triangles)
             
-            # Aggiungiamo i componenti di solver e simulazione
-            new_organ.addObject('EulerImplicitSolver', name="odesolver")
-            new_organ.addObject('CGLinearSolver', name="linear_solver", iterations=100)
-            
-            new_organ.addObject('MechanicalObject', name="dofs", position=vertices.tolist())
-            new_organ.addObject('TriangleSetTopologyContainer', name="topology", triangles=triangles.tolist(), position=vertices.tolist())
-            new_organ.addObject('UniformMass', totalMass=1.0)
-            new_organ.addObject('TriangularFEMForceField', youngModulus=3000, poissonRatio=0.3)
-            
-            self._add_visual_components(new_organ, vertices, triangles)
+            self._add_visual_components(new_organ, surface_vertices, surface_triangles)
             self._add_collision_components(new_organ)
             
             self.created_organs[organ.id] = new_organ
@@ -74,17 +94,23 @@ class OrganManager(Sofa.Core.Controller):
         except Exception as e:
             logger.error(f"Error creating organ: {str(e)}", exc_info=True)
 
-    def _add_visual_components(self, node, vertices, triangles):
+    def _add_visual_components(self, organ: Organ):
         """Aggiunge componenti per la visualizzazione 3D."""
-        visu = node.addChild("Visual")
-        visu.addObject('OglModel', name="VisualModel", position=vertices.tolist(), triangles=triangles.tolist(), color=[1.0, 0.5, 0.5, 1.0])
-        visu.addObject('BarycentricMapping', input="@../dofs", output="@VisualModel")
+        visu = organ.addChild('Visu')
+        visu.addObject('OglModel', name="VisualModel", src="@../../LiverSurface/mesh")
+        visu.addObject('BarycentricMapping', name="VisualMapping", input="@../dofs", output="@VisualModel")
 
-    def _add_collision_components(self, node):
-        """Aggiunge componenti per la collisione."""
-        collision = node.addChild("Collision")
-        collision.addObject('MechanicalObject', name="collision_dofs")
-        collision.addObject('PointCollisionModel', name="CollisionModel")
-        collision.addObject('BarycentricMapping', input="@../dofs", output="@collision_dofs")
+    # def _add_collision_components(self, organ: Organ):
+    #     surf = organ.addChild('Surf')
+    #     surf.addObject('MechanicalObject',
+    #                 name="spheres",
+    #                 position=organ.surface.vertices)
+    #     surf.addObject('SphereCollisionModel',
+    #                 name="CollisionModel",
+    #                 listRadius=[
+    #                     r0, r1, r2  # Sostituisci con i raggi delle sfere
+    #                 ])
+    #     surf.addObject('BarycentricMapping', name="CollisionMapping", input="@../dofs", output="@spheres")
+
 
 
