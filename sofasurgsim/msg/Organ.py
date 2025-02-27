@@ -1,97 +1,82 @@
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, Point, Quaternion
 from shape_msgs.msg import Mesh, MeshTriangle
-from std_msgs.msg import String
-from geometry_msgs.msg import Point, Quaternion
+from std_msgs.msg import UInt32
 
-import os
-import trimesh
-
-class Organ:
-    """Classe che rappresenta un organo con ID, posizione e mesh."""
-    def __init__(self, organ_id: String, pose: Pose, mesh: Mesh = None):
-        self.id = organ_id
-        self.pose = pose
-        self.mesh = mesh
+class TetrahedralMesh:
+    """Classe che rappresenta una mesh tetraedrica."""
+    def __init__(self, vertices=None, tetrahedra=None):
+        self.vertices = vertices if vertices else []
+        self.tetrahedra = tetrahedra if tetrahedra else []
 
     def to_dict(self):
-        """Converte l'oggetto Organ in un dizionario"""
+        """Converte l'oggetto TetrahedralMesh in un dizionario."""
         return {
-            'id': self.id.data,
-            'pose': {
-            'position': {
-                'x': self.pose.position.x,
-                'y': self.pose.position.y,
-                'z': self.pose.position.z
-            },
-            'orientation': {
-                'x': self.pose.orientation.x,
-                'y': self.pose.orientation.y,
-                'z': self.pose.orientation.z,
-                'w': self.pose.orientation.w
-            }
-            },
-            'mesh': {
-            'triangles': [{'vertex_indices': [triangle.vertex_indices[0], triangle.vertex_indices[1], triangle.vertex_indices[2]]} for triangle in self.mesh.triangles],
-            'vertices': [{'x': vertex.x, 'y': vertex.y, 'z': vertex.z} for vertex in self.mesh.vertices]
-            }
+            'vertices': [{'x': v.x, 'y': v.y, 'z': v.z} for v in self.vertices],
+            'tetrahedra': self.tetrahedra
         }
-    
-
-    def set_mesh(self, file_path: str):
-        """Crea un oggetto Mesh a partire da un file 3D supportato."""
-        if not os.path.isfile(file_path):
-            raise FileNotFoundError(f"File {file_path} not found")
-
-        vertices = []
-        triangles = []
-
-        # Carica il file di mesh utilizzando trimesh
-        mesh = trimesh.load(file_path)
-
-        if not mesh.is_mesh:
-            raise ValueError(f"File {file_path} non è un file di mesh valido")
-
-        # Ottieni i vertici della mesh
-        for vertex in mesh.vertices:
-            vertices.append(Point(x=vertex[0], y=vertex[1], z=vertex[2]))
-
-        # Ottieni i triangoli (indici dei vertici)
-        for face in mesh.faces:
-            triangles.append(MeshTriangle(vertex_indices=face.tolist()))
-
-        # Crea l'oggetto Mesh
-        mesh_obj = Mesh(vertices=vertices, triangles=triangles)
-        
-        self.mesh = mesh_obj
 
     @staticmethod
     def from_dict(data):
-        """Ricostruisce un oggetto Organ a partire da un dizionario"""
-        # Estrazione dei dati dal dizionario
-        organ_id = data['id']
+        """Crea un oggetto TetrahedralMesh da un dizionario."""
+        vertices = [Point(x=v['x'], y=v['y'], z=v['z']) for v in data['vertices']]
+        tetrahedra = data['tetrahedra']
+        return TetrahedralMesh(vertices, tetrahedra)
+    
+class Organ:
+    """Classe che rappresenta un organo con ID, posizione, mesh superficiale e mesh tetraedrica."""
+    def __init__(self, organ_id: UInt32, pose: Pose, surface: Mesh = None, tetrahedral_mesh: TetrahedralMesh = None):
+        self.id = organ_id
+        self.pose = pose
+        self.surface = surface
+        self.tetrahedral_mesh = tetrahedral_mesh
+
+    def to_dict(self):
+        """Converte l'oggetto Organ in un dizionario."""
+        return {
+            'id': self.id.data,
+            'pose': {
+                'position': {
+                    'x': self.pose.position.x,
+                    'y': self.pose.position.y,
+                    'z': self.pose.position.z
+                },
+                'orientation': {
+                    'x': self.pose.orientation.x,
+                    'y': self.pose.orientation.y,
+                    'z': self.pose.orientation.z,
+                    'w': self.pose.orientation.w
+                }
+            },
+            'surface': {
+                'triangles': [{'vertex_indices': [t.vertex_indices[0], t.vertex_indices[1], t.vertex_indices[2]]} for t in self.surface.triangles],
+                'vertices': [{'x': v.x, 'y': v.y, 'z': v.z} for v in self.surface.vertices]
+            } if self.surface else None,
+            'tetrahedral_mesh': self.tetrahedral_mesh.to_dict() if self.tetrahedral_mesh else None
+        }
+
+    @staticmethod
+    def from_dict(data):
+        """Ricostruisce un oggetto Organ da un dizionario."""
+        organ_id = UInt32(data['id'])
         pose_data = data['pose']
-        mesh_data = data['mesh']
+        pose = Pose(
+            position=Point(**pose_data['position']),
+            orientation=Quaternion(**pose_data['orientation'])
+        )
 
-        # Ricostruzione dell'oggetto Pose
-        position_data = pose_data['position']
-        orientation_data = pose_data['orientation']
-        position = Point( x=position_data['x'], y=position_data['y'], z=position_data['z'])
-        orientation = Quaternion(x=orientation_data['x'], y=orientation_data['y'], z=orientation_data['z'], w=orientation_data['w'])
-        pose = Pose(position=position, orientation=orientation)
+        # Ricostruzione della mesh superficiale
+        if data['surface']:
+            surface = Mesh(
+                vertices=[Point(**v) for v in data['surface']['vertices']],
+                triangles=[MeshTriangle(vertex_indices=t['vertex_indices']) for t in data['surface']['triangles']]
+            )
+        else:
+            surface = None
 
-        # Ricostruzione dell'oggetto Mesh
-        triangles = []
-        for triangle in mesh_data['triangles']:
-            mesh_triangle = MeshTriangle()
-            mesh_triangle.vertex_indices = triangle['vertex_indices']
-            triangles.append(mesh_triangle)
-        
-        vertices = [Point(x=vertex['x'], y=vertex['y'], z=vertex['z']) for vertex in mesh_data['vertices']]
-        mesh = Mesh(vertices=vertices, triangles=triangles)
+        # Ricostruzione della mesh tetraedrica
+        tetrahedral_mesh = TetrahedralMesh.from_dict(data['tetrahedral_mesh']) if data['tetrahedral_mesh'] else None
 
-        # Creazione dell'oggetto Organ
-        return Organ(organ_id, pose, mesh)
+        return Organ(organ_id, pose, surface, tetrahedral_mesh)
 
-        
     def __str__(self):
-        return f"Organ(id={self.id}, pose={self.pose}, mesh={self.mesh})"
+        return f"Organ(id={self.id}, pose={self.pose}, surface={self.surface}, tetrahedral_mesh={self.tetrahedral_mesh})"
