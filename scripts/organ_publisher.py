@@ -11,38 +11,7 @@ import trimesh
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import base_config
 
-class Organ:
-    """Classe che rappresenta un organo con ID, posizione e mesh."""
-    def __init__(self, organ_id: String, pose: Pose, mesh: Mesh):
-        self.id = organ_id
-        self.pose = pose
-        self.mesh = mesh
 
-    def to_dict(self):
-        """Converte l'oggetto Organ in un dizionario"""
-        return {
-            'id': self.id.data,
-            'pose': {
-                'position': {
-                    'x': self.pose.position.x,
-                    'y': self.pose.position.y,
-                    'z': self.pose.position.z
-                },
-                'orientation': {
-                    'x': self.pose.orientation.x,
-                    'y': self.pose.orientation.y,
-                    'z': self.pose.orientation.z,
-                    'w': self.pose.orientation.w
-                }
-            },
-            'mesh': {
-                'triangles': [{'vertex_indices': [int(triangle.vertex_indices[0]), int(triangle.vertex_indices[1]), int(triangle.vertex_indices[2])]} for triangle in self.mesh.triangles],
-                'vertices': [{'x': vertex.x, 'y': vertex.y, 'z': vertex.z} for vertex in self.mesh.vertices]
-            }
-        }
-    
-    def __str__(self):
-        return f"Organ(id={self.id}, pose={self.pose}, mesh={self.mesh})"
 
 
 def load_mesh_from_file(file_path):

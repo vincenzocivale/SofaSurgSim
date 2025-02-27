@@ -85,8 +85,8 @@ class OrganManager(Sofa.Core.Controller):
                                 positions= surface_vertices,
                                 triangles= surface_triangles)
             
-            self._add_visual_components(new_organ, surface_vertices, surface_triangles)
-            self._add_collision_components(new_organ)
+            # self._add_visual_components(new_organ, surface_vertices, surface_triangles)
+            # self._add_collision_components(new_organ)
             
             self.created_organs[organ.id] = new_organ
             logger.info(f"Organ {organ.id} successfully created!")
@@ -94,11 +94,11 @@ class OrganManager(Sofa.Core.Controller):
         except Exception as e:
             logger.error(f"Error creating organ: {str(e)}", exc_info=True)
 
-    def _add_visual_components(self, organ: Organ):
-        """Aggiunge componenti per la visualizzazione 3D."""
-        visu = organ.addChild('Visu')
-        visu.addObject('OglModel', name="VisualModel", src="@../../LiverSurface/mesh")
-        visu.addObject('BarycentricMapping', name="VisualMapping", input="@../dofs", output="@VisualModel")
+    # def _add_visual_components(self, organ: Organ):
+    #     """Aggiunge componenti per la visualizzazione 3D."""
+    #     visu = organ.addChild('Visu')
+    #     visu.addObject('OglModel', name="VisualModel", src="@../../LiverSurface/mesh")
+    #     visu.addObject('BarycentricMapping', name="VisualMapping", input="@../dofs", output="@VisualModel")
 
     # def _add_collision_components(self, organ: Organ):
     #     surf = organ.addChild('Surf')
