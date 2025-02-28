@@ -109,8 +109,8 @@ class TetrahedralMesh:
 
 class Organ:
     """Class representing an organ with ID, pose, surface mesh, and tetrahedral mesh."""
-    def __init__(self, organ_id: int, pose: Pose, surface: Mesh = None, tetrahedral_mesh: TetrahedralMesh = None):
-        self.id = organ_id
+    def __init__(self, id: int, pose: Pose, surface: Mesh = None, tetrahedral_mesh: TetrahedralMesh = None):
+        self.id = id
         self.pose = pose
         self.surface = surface
         self.tetrahedral_mesh = tetrahedral_mesh
@@ -127,11 +127,11 @@ class Organ:
     @staticmethod
     def from_dict(data):
         """Creates an Organ object from a dictionary."""
-        organ_id = data['id']
+        id = data['id']
         pose = Pose.from_dict(data['pose'])
         surface = Mesh.from_dict(data['surface']) if data['surface'] else None
         tetrahedral_mesh = TetrahedralMesh.from_dict(data['tetrahedral_mesh']) if data['tetrahedral_mesh'] else None
-        return Organ(organ_id=organ_id, pose=pose, surface=surface, tetrahedral_mesh=tetrahedral_mesh)
+        return Organ(id=id, pose=pose, surface=surface, tetrahedral_mesh=tetrahedral_mesh)
 
     def __str__(self):
         return f"Organ(id={self.id}, pose={self.pose}, surface={self.surface}, tetrahedral_mesh={self.tetrahedral_mesh})"

@@ -4,9 +4,6 @@ class BaseConfig:
     # Parametri ROS
     ROS_HOST = 'localhost'
     ROS_PORT = 9090
-    ROS_TOPICS = {
-       
-    }
 
     
 
@@ -21,5 +18,5 @@ class BaseConfig:
         assert self.SIMULATION_STEP > 0, "SIMULATION_STEP deve essere > 0"
 
     ORGAN_TOPIC = '/organs'
-    ORGAN_TOPIC_TYPE = 'ros_sofa_bridge_msgs/Organ'
+    ORGAN_TOPIC_TYPE = 'sofa_surgical_msgs/Organ'
 

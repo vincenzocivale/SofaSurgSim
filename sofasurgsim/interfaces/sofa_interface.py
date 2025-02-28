@@ -17,11 +17,6 @@ class SOFASceneController:
         self.ros_client = ros_client
         self.root_node.dt.value = self.cfg.SIMULATION_STEP 
 
-        self.organ_manager = self.root_node.addObject(OrganManager(
-            ros_client=self.ros_client,
-            name="OrganManager"
-        ))
-
     def _create_scene(self):
         """
         Crea gli oggetti nella scena di SOFA utilizzando i dati iniziali ricevuti dai topic ROS.
@@ -54,6 +49,11 @@ class SOFASceneController:
         self.root_node.addObject('BVHNarrowPhase', name="NarrowPhase")
         self.root_node.addObject('CollisionResponse', name="CollisionResponse", response="PenalityContactForceField")
         self.root_node.addObject('DiscreteIntersection')
+        
+        self.root_node.addObject(OrganManager(
+            ros_client=self.ros_client,
+            name="OrganManager"
+        ))
 
     def run_simulation(self):
         print("Avvio simulazione")

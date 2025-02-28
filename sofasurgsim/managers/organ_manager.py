@@ -50,7 +50,7 @@ class OrganManager(Sofa.Core.Controller):
 
             # Otteniamo il nodo radice (contesto) e aggiungiamo il nuovo nodo
             root = self.getContext()
-            new_organ = root.addChild(organ.id)
+            new_organ = root.addChild(str(organ.id))
 
             vertices_struct = [[v.x, v.y, v.z] for v in organ.tetrahedral_mesh.vertices]
             tetrahedra = new_organ.tetrahedral_mesh.tetrahedra

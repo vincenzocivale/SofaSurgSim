@@ -1,127 +1,72 @@
-import roslibpy
-from std_msgs.msg import String
-from geometry_msgs.msg import Pose, Point
-from shape_msgs.msg import Mesh, MeshTriangle
-import time
 import sys
 import os
-import trimesh
+sys.path.append(r"C:\Users\cical\Documents\GitHub\Repositories\SofaSurgical\sofasurgsim\msg")
+
+from Organ import Organ, Mesh, TetrahedralMesh, Point, MeshTriangle, Pose, Quaternion
+import roslibpy
+import meshio
 
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from config import base_config
-
-
-
-
-def load_mesh_from_file(file_path):
-    """Carica una mesh da un file STL o OBJ e la converte in una Mesh ROS."""
-    mesh = trimesh.load(file_path, force='mesh')
+def load_obj_file(file_path):
+    """Carica un file OBJ utilizzando meshio per ottenere i vertici e i triangoli."""
+    # Usa meshio per leggere il file OBJ
+    mesh = meshio.read(file_path)
     
-    ros_mesh = Mesh()
-    print("Mesh faces:", len(mesh.faces))
-    print("Mesh vertices:", len(mesh.vertices))
+    # Estrai i vertici e i triangoli
+    vertices = [Point(x=v[0], y=v[1], z=v[2]) for v in mesh.points]
+    triangles = [MeshTriangle(vertex_indices=t.tolist()) for t in mesh.cells_dict["triangle"]]
+
+    return Mesh(vertices, triangles)
+
+
+def load_vtk_file(file_path):
+    """Carica un file VTK utilizzando meshio per ottenere i vertici e i tetraedri."""
+    # Usa meshio per leggere il file VTK
+    mesh = meshio.read(file_path)
     
-    for face in mesh.faces:
-        triangle = MeshTriangle()
-        # Converti gli indici della faccia in una lista di interi
-        triangle.vertex_indices = [int(index) for index in face.tolist()]
-        print("Triangle indices:", [int(index) for index in face.tolist()])
-        ros_mesh.triangles.append(triangle)  # Usa append invece di extend
-    for vertex in mesh.vertices:
-        point = Point()
-        point.x, point.y, point.z = vertex[0], vertex[1], vertex[2]
-        ros_mesh.vertices.append(point)
+    # Estrai i vertici
+    vertices = [Point(x=v[0], y=v[1], z=v[2]) for v in mesh.points]
     
-    return ros_mesh
+    # Estrai i tetraedri (controllando se esistono nel file)
+    if "tetra" in mesh.cells_dict:
+        tetrahedra = [t.tolist() for t in mesh.cells_dict["tetra"]]
+    else:
+        raise ValueError("Il file VTK non contiene elementi tetraedrici.")
 
+    return TetrahedralMesh(vertices, tetrahedra)
 
-def publish_organ(mesh_path):
-    """Pubblica un oggetto Organ su un topic ROS usando roslibpy."""
-    config = base_config.BaseConfig()
-    client = roslibpy.Ros(host=config.ROS_HOST, port=9090)
-    client.run()
-
-    print("Connected:", client.is_connected)
-    topic = roslibpy.Topic(client, config.ORGAN_TOPIC, config.ORGAN_TOPIC_TYPE)
-
-    # Creazione dati di test
-    organ_id = String(data="heart")
+def create_organ_from_files(obj_path, msh_path, organ_id=1, pose=None):
+    """Crea un organo a partire dai file OBJ e MSH."""
+    surface_mesh = load_obj_file(obj_path)
+    tetrahedral_mesh = load_vtk_file(msh_path)
     
-    pose = Pose()
-    pose.position.x = 1.0
-    pose.position.y = 2.0
-    pose.position.z = 3.0
-    pose.orientation.x = 0.0
-    pose.orientation.y = 0.0
-    pose.orientation.z = 0.0
-    pose.orientation.w = 1.0
-    
-    mesh = load_mesh_from_file(mesh_path)
-    organ = Organ(organ_id, pose, mesh)
-    message = roslibpy.Message(organ.to_dict())
+    custom_position = Point(x=1.0, y=2.0, z=3.0)
+    custom_orientation = Quaternion(x=0.0, y=0.707, z=0.0, w=0.707)
 
-    start_time = time.time()
-    while time.time() - start_time < 1000000000000:
-        print("Publishinged")
-        topic.publish(message)
-        time.sleep(1)  # Pubblica ogni secondo
-    
-    client.terminate()
+    custom_pose = Pose(position=custom_position, orientation=custom_orientation)
 
-def publish_organ2():
-    config = base_config.BaseConfig()
-
-    """Pubblica un oggetto Organ su un topic ROS usando roslibpy."""
-    client = roslibpy.Ros(host=config.ROS_HOST, port=9090)
-    client.run()
-
-    topic = roslibpy.Topic(client, config.ORGAN_TOPIC, config.ORGAN_TOPIC_TYPE)
-
-    # Creazione dati di test
-    organ_id = String(data="heart")
-    
-    pose = Pose()
-    pose.position.x = 1.0
-    pose.position.y = 2.0
-    pose.position.z = 3.0
-    pose.orientation.x = 0.0
-    pose.orientation.y = 0.0
-    pose.orientation.z = 0.0
-    pose.orientation.w = 1.0
-
-    mesh = Mesh()
-    triangle = MeshTriangle()
-    triangle.vertex_indices = [0, 1, 2]
-    mesh.triangles.append(triangle)
-    vertex1 = Point()
-    vertex1.x = 0.0
-    vertex1.y = 0.0
-    vertex1.z = 0.0
-    vertex2 = Point()
-    vertex2.x = 1.0
-    vertex2.y = 0.0
-    vertex2.z = 0.0
-    vertex3 = Point()
-    vertex3.x = 0.0
-    vertex3.y = 1.0
-    vertex3.z = 0.0
-    mesh.vertices.extend([vertex1, vertex2, vertex3])
-
-    organ = Organ(organ_id, pose, mesh)
-
-    message = roslibpy.Message(organ.to_dict())
-
-    start_time = time.time()
-    while time.time() - start_time < 200000000000:
-        print("Publishing:", message)
-        topic.publish(message)
-        time.sleep(1)  # Pubblica ogni secondo
-
-    client.terminate()
-    
+    return Organ(id="liver",  pose=custom_pose, surface=surface_mesh, tetrahedral_mesh=tetrahedral_mesh)
 
 
-if __name__ == "__main__":
-    mesh_file_path = r"/home/vincenzo/Downloads/cube.obj"  
-    publish_organ(mesh_file_path)
+
+
+
+# Esempio di utilizzo
+obj_file_path = r'C:\Users\cical\Documents\GitHub\Repositories\SofaSurgical\liver-smooth.obj'
+msh_file_path = r'C:\Users\cical\Documents\GitHub\Repositories\SofaSurgical\liver.vtk'
+
+client = roslibpy.Ros(host="localhost", port=9090)
+client.run()
+
+print("Connected:", client.is_connected)
+topic = roslibpy.Topic(client, "/organs", 'sofa_surgical_msgs/Organ')
+organ = create_organ_from_files(obj_file_path, msh_file_path)
+
+message = roslibpy.Message(organ.to_dict())
+topic.publish(message)
+
+
+
+
+
+
