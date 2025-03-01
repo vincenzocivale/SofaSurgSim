@@ -42,6 +42,7 @@ class OrganManager(Sofa.Core.Controller):
     def create_new_organ(self, msg):
         """Crea un nuovo organo a partire da un messaggio ROS."""
         try:
+            logger.info(f"Creating new organ from message")
             organ = Organ.from_dict(msg)
             
             if organ.id in self.created_organs:
@@ -53,7 +54,7 @@ class OrganManager(Sofa.Core.Controller):
             new_organ = root.addChild(str(organ.id))
 
             vertices_struct = [[v.x, v.y, v.z] for v in organ.tetrahedral_mesh.vertices]
-            tetrahedra = new_organ.tetrahedral_mesh.tetrahedra
+            tetrahedra = organ.tetrahedral_mesh.tetrahedra
             
             new_organ.addObject('EulerImplicitSolver', name="cg_odesolver", rayleighStiffness="0.1", rayleighMass="0.1")
             new_organ.addObject('CGLinearSolver', name="linear_solver", iterations="25", tolerance="1e-09", threshold="1e-09")
@@ -61,7 +62,7 @@ class OrganManager(Sofa.Core.Controller):
             # Topologia tetraedrica definita manualmente
             new_organ.addObject('TetrahedronSetTopologyContainer', 
                         name="topo",
-                        positions=vertices_struct,
+                        position=vertices_struct,
                         tetrahedra=tetrahedra)
             
             new_organ.addObject('MechanicalObject', name="dofs")
@@ -82,7 +83,7 @@ class OrganManager(Sofa.Core.Controller):
             liver_surface = root.addChild(f"{organ.id}_surface")
             liver_surface.addObject('MeshTopology', 
                                 name="mesh",
-                                positions= surface_vertices,
+                                position= surface_vertices,
                                 triangles= surface_triangles)
             
             # self._add_visual_components(new_organ, surface_vertices, surface_triangles)
