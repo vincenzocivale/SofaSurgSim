@@ -109,7 +109,7 @@ class TetrahedralMesh:
 
 class Organ:
     """Class representing an organ with ID, pose, surface mesh, and tetrahedral mesh."""
-    def __init__(self, id: int, pose: Pose, surface: Mesh = None, tetrahedral_mesh: TetrahedralMesh = None):
+    def __init__(self, id: str, pose: Pose, surface: Mesh = None, tetrahedral_mesh: TetrahedralMesh = None):
         self.id = id
         self.pose = pose
         self.surface = surface
