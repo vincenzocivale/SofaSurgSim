@@ -71,45 +71,45 @@ class SOFASceneController:
             Sofa.Gui.GUIManager.MainLoop(self.root_node)
             Sofa.Gui.GUIManager.closeGUI()
 
-    def create_sofa_nodes_from_data(self, surface_mesh, tetrahedral_mesh):
+    def create_sofa_nodes_from_meshes(self, surface_mesh, tetrahedral_mesh):
         """
-        Crea i nodi in Sofa a partire direttamente dai dati della mesh superficiale e tetraedrica.
+        Create SOFA nodes from surface and tetrahedral mesh data.
 
-        :param surface_mesh: La mesh superficiale (Mesh) da usare per la superficie.
-        :param tetrahedral_mesh: La mesh tetraedrica (TetrahedralMesh) da usare per la simulazione.
-        :return: Il nodo `liver` creato con tutti i relativi oggetti di Sofa.
+        :param surface_mesh: The surface mesh (Mesh) to use for the surface.
+        :param tetrahedral_mesh: The tetrahedral mesh (TetrahedralMesh) to use for the simulation.
+        :return: The created node with all related SOFA objects.
         """
-        # Crea il nodo 'Liver' nel tree di Sofa
-        liver = self.root_node.addChild('Liver')
+        # Create the 'Organ' node in the SOFA tree
+        organ_node = self.root_node.addChild('Organ')
 
-        # Aggiungi il solver e il risolutore lineare per la simulazione
-        liver.addObject('EulerImplicitSolver', name="cg_odesolver", rayleighStiffness="0.1", rayleighMass="0.1")
-        liver.addObject('CGLinearSolver', name="linear_solver", iterations="25", tolerance="1e-09", threshold="1e-09")
+        # Add solver and linear solver for the simulation
+        organ_node.addObject('EulerImplicitSolver', name="cg_odesolver", rayleighStiffness="0.1", rayleighMass="0.1")
+        organ_node.addObject('CGLinearSolver', name="linear_solver", iterations="25", tolerance="1e-09", threshold="1e-09")
 
-        # Creazione della topologia tetraedrica da dati direttamente (senza file)
-        liver.addObject('TetrahedronSetTopologyContainer', name="topo", 
+        # Create tetrahedral topology from data directly (without file)
+        organ_node.addObject('TetrahedronSetTopologyContainer', name="topo", 
                 tetrahedra=" ".join(" ".join(map(str, tetra.vertices_indices)) for tetra in tetrahedral_mesh.tetrahedra))
 
-        liver.addObject('MechanicalObject', name="dofs", 
+        organ_node.addObject('MechanicalObject', name="dofs", 
                         position=" ".join([f"{v.x} {v.y} {v.z}" for v in surface_mesh.vertices]))
 
-        liver.addObject('TetrahedronSetGeometryAlgorithms', template="Vec3d", name="GeomAlgo")
-        liver.addObject('DiagonalMass', name="Mass", massDensity="1.0")
-        liver.addObject('TetrahedralCorotationalFEMForceField', template="Vec3d", name="FEM", method="large", poissonRatio="0.3", youngModulus="3000", computeGlobalMatrix="0")
-        liver.addObject('FixedProjectiveConstraint', name="FixedConstraint", indices="3 39 64")
+        organ_node.addObject('TetrahedronSetGeometryAlgorithms', template="Vec3d", name="GeomAlgo")
+        organ_node.addObject('DiagonalMass', name="Mass", massDensity="1.0")
+        organ_node.addObject('TetrahedralCorotationalFEMForceField', template="Vec3d", name="FEM", method="large", poissonRatio="0.3", youngModulus="3000", computeGlobalMatrix="0")
+        organ_node.addObject('FixedConstraint', name="FixedConstraint", indices="3 39 64")
 
-        surface_node = liver.addChild("Surface")
+        surface_node = organ_node.addChild("Surface")
 
-        # Aggiunge la topologia della superficie
+        # Add surface topology
         surface_node.addObject('TriangleSetTopologyContainer', name="surface_topo", 
                             triangles=" ".join(" ".join(map(str, tri.vertex_indices)) for tri in surface_mesh.triangles))
 
-        # Aggiunge i vertici della mesh
+        # Add surface mesh vertices
         surface_node.addObject('MechanicalObject', name="surface_dofs", 
                             position=" ".join(f"{v.x} {v.y} {v.z}" for v in surface_mesh.vertices))
 
-        # Aggiunge la visualizzazione della mesh con OglModel
+        # Add mesh visualization with OglModel
         surface_node.addObject('OglModel', name="VisualModel", color="0.8 0.8 0.8 1.0")
         
-        # Mappa la visualizzazione ai gradi di libertà della superficie
+        # Map visualization to surface degrees of freedom
         surface_node.addObject('BarycentricMapping', name="VisualMapping", input="@surface_dofs", output="@VisualModel")
