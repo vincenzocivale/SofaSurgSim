@@ -4,7 +4,7 @@ import Sofa.Gui
 from config import base_config
 from sofasurgsim.managers.organ_manager import OrganManager
 from sofasurgsim.interfaces.ros_interface import ROSClient
-from sofasurgsim.msg.Organ import Organ, VTKAttributes, Point, Quaternion, Pose
+from sofasurgsim.msg.Organ import Organ
     
 class SOFASceneController:
     def __init__(self, ros_client: ROSClient, GUI: bool):
@@ -51,55 +51,9 @@ class SOFASceneController:
         self.root_node.addObject('DiscreteIntersection')
 
 
-        new_organ = self.root_node.addChild("Prova")
-
-        mesh_path = r"C:\Users\cical\Documents\GitHub\Repositories\SofaSurgical\mesh_files\1.vtk"
-        vtk_attributes = VTKAttributes()
-        vtk_attributes.load_from_vtk(mesh_path)
-
-        position = Point(x=1.0, y=2.0, z=3.0)
-
-        # Creazione di un'istanza di Quaternion per l'orientamento
-        orientation = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
-
-        # Creazione di un'istanza di Pose con posizione e orientamento specificati
-        pose = Pose(position=position, orientation=orientation)
-        organ = Organ(
-            id="Prova",
-            pose=pose,
-            surface=None,
-            tetrahedral_mesh=vtk_attributes
-        )
-        
-
-        new_organ.addObject('EulerImplicitSolver', name="cg_odesolver", rayleighStiffness="0.1", rayleighMass="0.1")
-        new_organ.addObject('CGLinearSolver', name="linear_solver", iterations="25", tolerance="1e-09", threshold="1e-09")
-        new_organ.addObject('MeshVTKLoader', name="meshLoader", filename=mesh_path)  # Modifica qui per caricare il file .vtk
-        new_organ.addObject('TetrahedronSetTopologyContainer', name="topo", src="@meshLoader")
-        new_organ.addObject('MechanicalObject', name="dofs", src="@meshLoader")
-        new_organ.addObject('TetrahedronSetGeometryAlgorithms', template="Vec3d", name="GeomAlgo")
-        new_organ.addObject('DiagonalMass', name="Mass", massDensity="1.0")
-        new_organ.addObject('TetrahedralCorotationalFEMForceField', template="Vec3d", name="FEM", method="large", poissonRatio="0.3", youngModulus="3000", computeGlobalMatrix="0")
-        new_organ.addObject('FixedProjectiveConstraint', name="FixedConstraint", indices="3 39 64")
-
-        self.root_node.addObject('MeshOBJLoader', name="LiverSurface", filename="mesh/liver-smooth.obj")
-
-        visu = new_organ.addChild('Visu')
-        visu.addObject('OglModel', name="VisualModel", src="@../../LiverSurface")
-        visu.addObject('BarycentricMapping', name="VisualMapping", input="@../dofs", output="@VisualModel")
-
-        surf = new_organ.addChild('Surf')
-        surf.addObject('SphereLoader', name="sphereLoader", filename="mesh/liver.sph")
-        surf.addObject('MechanicalObject', name="spheres", position="@sphereLoader.position")
-        surf.addObject('SphereCollisionModel', name="CollisionModel", listRadius="@sphereLoader.listRadius")
-        surf.addObject('BarycentricMapping', name="CollisionMapping", input="@../dofs", output="@spheres")
-
-        
-        self.root_node.addObject(OrganManager(
-            root_node=self.root_node,
-            ros_client=self.ros_client,
-            name="OrganManager"
-        ))
+        organ_msg = self.ros_client.use_service('/get_organ', 'sofa_surgical_msgs/GetOrgan')
+        organ = Organ.from_dict(organ_msg)
+        self.create_sofa_nodes_from_data(organ.surface, organ.tetrahedral_mesh)
 
         return self.root_node
 
@@ -116,3 +70,46 @@ class SOFASceneController:
             Sofa.Gui.GUIManager.createGUI(self.root_node)
             Sofa.Gui.GUIManager.MainLoop(self.root_node)
             Sofa.Gui.GUIManager.closeGUI()
+
+    def create_sofa_nodes_from_data(self, surface_mesh, tetrahedral_mesh):
+        """
+        Crea i nodi in Sofa a partire direttamente dai dati della mesh superficiale e tetraedrica.
+
+        :param surface_mesh: La mesh superficiale (Mesh) da usare per la superficie.
+        :param tetrahedral_mesh: La mesh tetraedrica (TetrahedralMesh) da usare per la simulazione.
+        :return: Il nodo `liver` creato con tutti i relativi oggetti di Sofa.
+        """
+        # Crea il nodo 'Liver' nel tree di Sofa
+        liver = self.root_node.addChild('Liver')
+
+        # Aggiungi il solver e il risolutore lineare per la simulazione
+        liver.addObject('EulerImplicitSolver', name="cg_odesolver", rayleighStiffness="0.1", rayleighMass="0.1")
+        liver.addObject('CGLinearSolver', name="linear_solver", iterations="25", tolerance="1e-09", threshold="1e-09")
+
+        # Creazione della topologia tetraedrica da dati direttamente (senza file)
+        liver.addObject('TetrahedronSetTopologyContainer', name="topo", 
+                tetrahedra=" ".join(" ".join(map(str, tetra.vertices_indices)) for tetra in tetrahedral_mesh.tetrahedra))
+
+        liver.addObject('MechanicalObject', name="dofs", 
+                        position=" ".join([f"{v.x} {v.y} {v.z}" for v in surface_mesh.vertices]))
+
+        liver.addObject('TetrahedronSetGeometryAlgorithms', template="Vec3d", name="GeomAlgo")
+        liver.addObject('DiagonalMass', name="Mass", massDensity="1.0")
+        liver.addObject('TetrahedralCorotationalFEMForceField', template="Vec3d", name="FEM", method="large", poissonRatio="0.3", youngModulus="3000", computeGlobalMatrix="0")
+        liver.addObject('FixedProjectiveConstraint', name="FixedConstraint", indices="3 39 64")
+
+        surface_node = liver.addChild("Surface")
+
+        # Aggiunge la topologia della superficie
+        surface_node.addObject('TriangleSetTopologyContainer', name="surface_topo", 
+                            triangles=" ".join(" ".join(map(str, tri.vertex_indices)) for tri in surface_mesh.triangles))
+
+        # Aggiunge i vertici della mesh
+        surface_node.addObject('MechanicalObject', name="surface_dofs", 
+                            position=" ".join(f"{v.x} {v.y} {v.z}" for v in surface_mesh.vertices))
+
+        # Aggiunge la visualizzazione della mesh con OglModel
+        surface_node.addObject('OglModel', name="VisualModel", color="0.8 0.8 0.8 1.0")
+        
+        # Mappa la visualizzazione ai gradi di libertà della superficie
+        surface_node.addObject('BarycentricMapping', name="VisualMapping", input="@surface_dofs", output="@VisualModel")

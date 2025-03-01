@@ -91,6 +91,20 @@ class ROSClient:
         self.publishing_threads[topic_name] = thread
         logger.info(f"Publisher active on {topic_name} at {rate} Hz")
     
+    def use_service(self, service_name, service_type):
+        """
+        Use a service.
+        Args:
+            service_name (str): Service name
+            service_type (str): ROS service type
+        """
+        service = roslibpy.Service(self.client, service_name, service_type)
+        request = roslibpy.ServiceRequest()
+        result = service.call(request)
+        logger.info(f"Service {type(result)} called")
+        
+        return result['organ']
+    
     def _log_callback(message):
         log_levels = {
             20: logging.INFO,

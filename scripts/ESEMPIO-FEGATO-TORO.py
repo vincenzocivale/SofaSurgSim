@@ -50,7 +50,7 @@ def createScene(root):
     root.addObject('CollisionResponse', name="CollisionResponse", response="PenalityContactForceField")
     root.addObject('DiscreteIntersection')
 
-    root.addObject('MeshOBJLoader', name="LiverSurface", filename="mesh/liver-smooth.obj")
+    
 
     liver = root.addChild('Liver')
     liver.addObject('EulerImplicitSolver', name="cg_odesolver", rayleighStiffness="0.1", rayleighMass="0.1")
@@ -63,6 +63,7 @@ def createScene(root):
     liver.addObject('TetrahedralCorotationalFEMForceField', template="Vec3d", name="FEM", method="large", poissonRatio="0.3", youngModulus="3000", computeGlobalMatrix="0")
     liver.addObject('FixedProjectiveConstraint', name="FixedConstraint", indices="3 39 64")
 
+    root.addObject('MeshOBJLoader', name="LiverSurface", filename="mesh/liver-smooth.obj")
     visu = liver.addChild('Visu')
     visu.addObject('OglModel', name="VisualModel", src="@../../LiverSurface")
     visu.addObject('BarycentricMapping', name="VisualMapping", input="@../dofs", output="@VisualModel")
