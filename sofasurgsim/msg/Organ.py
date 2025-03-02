@@ -162,3 +162,76 @@ class Organ:
 
     def __str__(self):
         return f"Organ(id={self.id}, pose={self.pose}, surface={self.surface}, tetrahedral_mesh={self.tetrahedral_mesh})"
+    
+
+class Displacement:
+    """
+    Represents the displacement of a vertex in a mesh.
+    Attributes:
+        dx (float): Displacement in the x-direction.
+        dy (float): Displacement in the y-direction.
+        dz (float): Displacement in the z-direction.
+    """
+
+    def __init__(self, dx: float, dy: float, dz: float):
+        """
+        Initializes a Displacement object.
+        Args:
+            dx (float): Displacement in the x-direction.
+            dy (float): Displacement in the y-direction.
+            dz (float): Displacement in the z-direction.
+        """
+        self.dx = dx
+        self.dy = dy
+        self.dz = dz
+
+    def to_dict(self):
+        """Converts the Displacement object to a dictionary."""
+        return {'dx': self.dx, 'dy': self.dy, 'dz': self.dz}
+
+    @staticmethod
+    def from_dict(data):
+        """Creates a Displacement object from a dictionary."""
+        return Displacement(dx=data['dx'], dy=data['dy'], dz=data['dz'])
+
+class DeformationUpdate:
+    """
+    Represents an update to the deformation of a mesh.
+    Attributes:
+        node_name (str): Name of the node.
+        vertex_ids (list[int]): List of vertex IDs that have been deformed.
+        displacements (list[Displacement]): List of displacements corresponding to the vertex IDs.
+        timestamp (float): Time of generation of the deformation update.
+    """
+
+    def __init__(self, node_name: str, vertex_ids: list[int], displacements: list[Displacement], timestamp: float):
+        """
+        Initializes a DeformationUpdate object.
+        Args:
+            node_name (str): Name of the node.
+            vertex_ids (list[int]): List of vertex IDs that have been deformed.
+            displacements (list[Displacement]): List of displacements for the vertices.
+            timestamp (float): Time of generation of the deformation update.
+        """
+        self.node_name = node_name
+        self.vertex_ids = vertex_ids
+        self.displacements = displacements
+        self.timestamp = timestamp
+
+    def to_dict(self):
+        """Converts the DeformationUpdate object to a dictionary."""
+        return {
+            'node_name': self.node_name,
+            'vertex_ids': self.vertex_ids,
+            'displacements': self.displacements.to_dict(),
+            'timestamp': self.timestamp
+        }
+
+    @staticmethod
+    def from_dict(data):
+        """Creates a DeformationUpdate object from a dictionary."""
+        node_name = data['node_name']
+        vertex_ids = data['vertex_ids']
+        displacements = Displacement.from_dict(data['displacements'])
+        timestamp = data['timestamp']
+        return DeformationUpdate(node_name=node_name, vertex_ids=vertex_ids, displacements=displacements, timestamp=timestamp)

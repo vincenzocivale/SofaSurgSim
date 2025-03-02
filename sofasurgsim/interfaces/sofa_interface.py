@@ -55,7 +55,9 @@ class SOFASceneController:
 
         organ_msg = self.ros_client.use_service('/get_organ', 'sofa_surgical_msgs/GetOrgan')
         organ = Organ.from_dict(organ_msg)
-        self.create_sofa_nodes_from_meshes(organ.surface, organ.tetrahedral_mesh)
+        organ_node = self.create_sofa_nodes_from_meshes(organ.surface, organ.tetrahedral_mesh)
+        
+        self.root_node.addObject(OrganManager(root_node=self.root_node, created_organs_node=[organ_node], ros_client=self.ros_client))
 
         return self.root_node
 
@@ -109,9 +111,6 @@ class SOFASceneController:
                     position=" ".join(f"{v.x} {v.y} {v.z}" for v in surface_mesh.vertices))
 
         visu.addObject('OglModel', name="VisualModel", src="@surface_topo", color="1 0 0 1")
-        visu.addObject('BarycentricMapping', name="VisualMapping", input="@../dofs", output="@visual_dofs")
-
-
-    
+        visu.addObject('BarycentricMapping', name="VisualMapping", input="@../dofs", output="@visual_dofs")    
 
         return organ_node

@@ -58,39 +58,19 @@ class ROSClient:
         self.subscribers[topic_name] = subscriber
         logger.info(f"Subscribed to {topic_name}")
 
-    def create_publisher(self, topic_name, msg_type, data_generator, rate=10):
+    def create_publisher(self, topic_name, msg_type, message_data):
         """
         Create a publisher for a topic with a dedicated thread.
         Args:
             topic_name (str): Topic name
             msg_type (str): ROS message type
-            data_generator (function): Function to generate data to publish
-            rate (int): Publishing rate (Hz)
+            message_data (dict): Initial message data
         """
-        publisher = roslibpy.Topic(
-            self.client,
-            topic_name,
-            msg_type,
-            queue_size=10
-        )
-        publisher.advertise()
-        self.publishers[topic_name] = publisher
+        talker = roslibpy.Topic(self.client, topic_name, msg_type)
 
-        def publishing_loop():
-            while self.running:
-                try:
-                    data = data_generator()
-                    if data is not None:
-                        publisher.publish(roslibpy.Message(data))
-                except Exception as e:
-                    logger.error(f"Error in data generation for {topic_name}: {str(e)}")
-                sleep(1.0 / rate)
+        talker.publish(roslibpy.Message(message_data))
+        talker.unadvertise()
 
-        thread = threading.Thread(target=publishing_loop, daemon=True)
-        thread.start()
-        self.publishing_threads[topic_name] = thread
-        logger.info(f"Publisher active on {topic_name} at {rate} Hz")
-    
     def use_service(self, service_name, service_type):
         """
         Use a service.
