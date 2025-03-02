@@ -53,7 +53,7 @@ class SOFASceneController:
 
         organ_msg = self.ros_client.use_service('/get_organ', 'sofa_surgical_msgs/GetOrgan')
         organ = Organ.from_dict(organ_msg)
-        self.create_sofa_nodes_from_data(organ.surface, organ.tetrahedral_mesh)
+        self.create_sofa_nodes_from_meshes(organ.surface, organ.tetrahedral_mesh)
 
         return self.root_node
 
@@ -91,25 +91,11 @@ class SOFASceneController:
                 tetrahedra=" ".join(" ".join(map(str, tetra.vertices_indices)) for tetra in tetrahedral_mesh.tetrahedra))
 
         organ_node.addObject('MechanicalObject', name="dofs", 
-                        position=" ".join([f"{v.x} {v.y} {v.z}" for v in surface_mesh.vertices]))
+                position=" ".join(f"{v.x} {v.y} {v.z}" for v in tetrahedral_mesh.vertices))
 
         organ_node.addObject('TetrahedronSetGeometryAlgorithms', template="Vec3d", name="GeomAlgo")
         organ_node.addObject('DiagonalMass', name="Mass", massDensity="1.0")
         organ_node.addObject('TetrahedralCorotationalFEMForceField', template="Vec3d", name="FEM", method="large", poissonRatio="0.3", youngModulus="3000", computeGlobalMatrix="0")
         organ_node.addObject('FixedConstraint', name="FixedConstraint", indices="3 39 64")
 
-        surface_node = organ_node.addChild("Surface")
-
-        # Add surface topology
-        surface_node.addObject('TriangleSetTopologyContainer', name="surface_topo", 
-                            triangles=" ".join(" ".join(map(str, tri.vertex_indices)) for tri in surface_mesh.triangles))
-
-        # Add surface mesh vertices
-        surface_node.addObject('MechanicalObject', name="surface_dofs", 
-                            position=" ".join(f"{v.x} {v.y} {v.z}" for v in surface_mesh.vertices))
-
-        # Add mesh visualization with OglModel
-        surface_node.addObject('OglModel', name="VisualModel", color="0.8 0.8 0.8 1.0")
-        
-        # Map visualization to surface degrees of freedom
-        surface_node.addObject('BarycentricMapping', name="VisualMapping", input="@surface_dofs", output="@VisualModel")
+        return organ_node

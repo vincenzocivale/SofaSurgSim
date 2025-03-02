@@ -118,8 +118,8 @@ class TetrahedralMesh:
     def to_dict(self):
         """Converts the TetrahedralMesh object to a dictionary."""
         return {
-            'vertices': [v.to_dict() for v in self.vertices],  # Conviene che Point32 abbia un metodo to_dict
-            'tetrahedra': [t.to_dict() for t in self.tetrahedra]  # Conviene che Tetrahedron abbia un metodo to_dict
+            'vertices': [v.to_dict() for v in self.vertices],  
+            'tetrahedra': [t.to_dict() for t in self.tetrahedra]  
         }
 
     @staticmethod
