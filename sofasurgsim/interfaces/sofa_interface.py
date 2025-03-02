@@ -49,6 +49,8 @@ class SOFASceneController:
         self.root_node.addObject('BVHNarrowPhase', name="NarrowPhase")
         self.root_node.addObject('CollisionResponse', name="CollisionResponse", response="PenalityContactForceField")
         self.root_node.addObject('DiscreteIntersection')
+        self.root_node.addObject('VisualStyle', displayFlags="showVisualModels showBehaviorModels showForceFields showCollisionModels")
+
 
 
         organ_msg = self.ros_client.use_service('/get_organ', 'sofa_surgical_msgs/GetOrgan')
@@ -97,5 +99,19 @@ class SOFASceneController:
         organ_node.addObject('DiagonalMass', name="Mass", massDensity="1.0")
         organ_node.addObject('TetrahedralCorotationalFEMForceField', template="Vec3d", name="FEM", method="large", poissonRatio="0.3", youngModulus="3000", computeGlobalMatrix="0")
         organ_node.addObject('FixedConstraint', name="FixedConstraint", indices="3 39 64")
+
+        visu = organ_node.addChild('Visu')
+
+        visu.addObject('TriangleSetTopologyContainer', name="surface_topo",
+                    triangles=" ".join(" ".join(map(str, tri.vertex_indices)) for tri in surface_mesh.triangles))
+
+        visu.addObject('MechanicalObject', name="visual_dofs", 
+                    position=" ".join(f"{v.x} {v.y} {v.z}" for v in surface_mesh.vertices))
+
+        visu.addObject('OglModel', name="VisualModel", src="@surface_topo", color="1 0 0 1")
+        visu.addObject('BarycentricMapping', name="VisualMapping", input="@../dofs", output="@visual_dofs")
+
+
+    
 
         return organ_node
