@@ -2,9 +2,7 @@ import logging
 import Sofa
 import Sofa.Core
 import Sofa.Simulation
-import numpy as np
-import queue
-import os
+import time
 
 from sofasurgsim.msg.Organ import Organ, Displacement, DeformationUpdate
 from sofasurgsim.interfaces.ros_interface import ROSClient
@@ -42,7 +40,7 @@ class OrganManager(Sofa.Core.Controller):
                 if visual_model:
                     positions = visual_model.findData('position').value  # Estrai le posizioni dei vertici
 
-                    node_name = str(node.name)  
+                    node_name = str(node.name.value)  
                     surface_positions[node_name] = positions
                 else:
                     print(f"Node {str(node.name)} has no 'VisualModel' in 'Visu' node")
@@ -52,7 +50,7 @@ class OrganManager(Sofa.Core.Controller):
         return surface_positions
 
     
-    def compute_deformation_updates(self, prev_positions, current_positions):
+    def compute_deformation_updates(self, prev_positions: dict, current_positions: dict):
         """
         Compute the deformation updates between two sets of surface positions.
 
@@ -88,8 +86,8 @@ class OrganManager(Sofa.Core.Controller):
 
                 # Create a DeformationUpdate object if there are any displacements
                 if vertex_ids:
-                    timestamp = Sofa.Simulation.getSimulation().getTime()
-                    deformation_update = DeformationUpdate(timestamp, node_name, vertex_ids, displacements)
+                    timestamp = time.time()
+                    deformation_update = DeformationUpdate(timestamp=timestamp, node_name=node_name, vertex_ids=vertex_ids, displacements=displacements)
                     deformation_updates.append(deformation_update)
                 else:
                     print(f"No displacements for node {node_name}")

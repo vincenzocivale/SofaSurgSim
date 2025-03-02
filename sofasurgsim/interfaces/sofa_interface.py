@@ -55,8 +55,8 @@ class SOFASceneController:
 
         organ_msg = self.ros_client.use_service('/get_organ', 'sofa_surgical_msgs/GetOrgan')
         organ = Organ.from_dict(organ_msg)
-        organ_node = self.create_sofa_nodes_from_meshes(organ.surface, organ.tetrahedral_mesh)
-        
+        organ_node = self.create_sofa_nodes_from_meshes(organ.id, organ.surface, organ.tetrahedral_mesh)
+
         self.root_node.addObject(OrganManager(root_node=self.root_node, created_organs_node=[organ_node], ros_client=self.ros_client))
 
         return self.root_node
@@ -75,7 +75,7 @@ class SOFASceneController:
             Sofa.Gui.GUIManager.MainLoop(self.root_node)
             Sofa.Gui.GUIManager.closeGUI()
 
-    def create_sofa_nodes_from_meshes(self, surface_mesh, tetrahedral_mesh):
+    def create_sofa_nodes_from_meshes(self, id, surface_mesh, tetrahedral_mesh):
         """
         Create SOFA nodes from surface and tetrahedral mesh data.
 
@@ -83,8 +83,7 @@ class SOFASceneController:
         :param tetrahedral_mesh: The tetrahedral mesh (TetrahedralMesh) to use for the simulation.
         :return: The created node with all related SOFA objects.
         """
-        # Create the 'Organ' node in the SOFA tree
-        organ_node = self.root_node.addChild('Organ')
+        organ_node = self.root_node.addChild(id)
 
         # Add solver and linear solver for the simulation
         organ_node.addObject('EulerImplicitSolver', name="cg_odesolver", rayleighStiffness="0.1", rayleighMass="0.1")

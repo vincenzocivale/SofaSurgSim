@@ -223,7 +223,7 @@ class DeformationUpdate:
         return {
             'node_name': self.node_name,
             'vertex_ids': self.vertex_ids,
-            'displacements': self.displacements.to_dict(),
+            'displacements': [disp.to_dict() for disp in self.displacements],
             'timestamp': self.timestamp
         }
 
@@ -232,6 +232,6 @@ class DeformationUpdate:
         """Creates a DeformationUpdate object from a dictionary."""
         node_name = data['node_name']
         vertex_ids = data['vertex_ids']
-        displacements = Displacement.from_dict(data['displacements'])
+        displacements = [Displacement.from_dict(d) for d in data['displacements']]
         timestamp = data['timestamp']
         return DeformationUpdate(node_name=node_name, vertex_ids=vertex_ids, displacements=displacements, timestamp=timestamp)
