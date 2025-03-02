@@ -1,22 +1,25 @@
+import logging
+
 class BaseConfig:
     """Configurazioni base convalide"""
+    
+    # Configurazione del logger
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
     
     # Parametri ROS
     ROS_HOST = 'localhost'
     ROS_PORT = 9090
 
-    
-
     # Parametri SOFA
     GUI = True
-    SOFA_SCENE_FILE = 'scenes/main_scene.py'
-    SIMULATION_STEP = 0.01  # Secondi
-
-    # Validazione parametri
-    def validate(self):
-        assert isinstance(self.ROS_PORT, int), "ROS_PORT deve essere intero"
-        assert self.SIMULATION_STEP > 0, "SIMULATION_STEP deve essere > 0"
+    SIMULATION_STEP = 0.01  
 
     ORGAN_TOPIC = '/organs'
     ORGAN_TOPIC_TYPE = 'sofa_surgical_msgs/Organ'
+
+    ORGANS_SERVICE = '/get_organ'
+    ORGANS_SERVICE_TYPE = 'sofa_surgical_msgs/GetOrgan'
+
+config = BaseConfig()
 

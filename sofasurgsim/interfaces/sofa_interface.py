@@ -1,22 +1,21 @@
 #!/usr/bin/env python
 import Sofa
 import Sofa.Gui
-from config import base_config
+from config.base_config import config as cfg
 from sofasurgsim.managers.organ_manager import OrganManager
 from sofasurgsim.interfaces.ros_interface import ROSClient
 from sofasurgsim.msg.Organ import Organ
     
 class SOFASceneController:
-    def __init__(self, ros_client: ROSClient, GUI: bool):
+    def __init__(self, ros_client: ROSClient):
         
         self.root_node = Sofa.Core.Node("root")
         self.root_node.addObject('DefaultAnimationLoop')
         self.root_node.addObject('DefaultVisualManagerLoop')
         
-        self.cfg = base_config.BaseConfig()
-        self.GUI = GUI
+        self.GUI = cfg.GUI
         self.ros_client = ros_client
-        self.root_node.dt.value = self.cfg.SIMULATION_STEP 
+        self.root_node.dt.value = cfg.SIMULATION_STEP 
 
     def _create_scene(self):
         """
@@ -53,7 +52,7 @@ class SOFASceneController:
 
 
 
-        organ_msg = self.ros_client.use_service('/get_organ', 'sofa_surgical_msgs/GetOrgan')
+        organ_msg = self.ros_client.use_service(cfg.ORGANS_SERVICE, cfg.ORGANS_SERVICE_TYPE)
         organ = Organ.from_dict(organ_msg)
         organ_node = self.create_sofa_nodes_from_meshes(organ.id, organ.surface, organ.tetrahedral_mesh)
 
@@ -62,7 +61,7 @@ class SOFASceneController:
         return self.root_node
 
     def run_simulation(self):
-        print("Avvio simulazione")
+        cfg.logger.info("Starting SOFA simulation.")
         self._create_scene()
         Sofa.Simulation.init(self.root_node)
         

@@ -1,11 +1,6 @@
 import roslibpy
-import threading
-from queue import Queue
-from time import sleep
-import logging
+from config.base_config import config as cfg
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 class ROSClient:
     def __init__(self, host='localhost', port=9090):
@@ -22,7 +17,7 @@ class ROSClient:
         """Connect to the ROS server."""
         self.client.run()
         self.running = True
-        logger.info(f'Connected: {self.client.is_connected}')
+        cfg.logger.info(f'Connected: {self.client.is_connected}')
 
     def disconnect(self):
         """Disconnect from the ROS client and stop threads."""
@@ -32,7 +27,7 @@ class ROSClient:
         for pub in self.publishers.values():
             pub.unadvertise()
         self.client.close()
-        logger.info("Disconnected")
+        cfg.logger.info("Disconnected")
 
     def create_subscriber(self, topic_name, msg_type, callback):
         """
@@ -46,7 +41,7 @@ class ROSClient:
             try:
                 callback(message)
             except Exception as e:
-                logger.error(f"Error in callback for topic {topic_name}: {str(e)}")
+                cfg.logger.error(f"Error in callback for topic {topic_name}: {str(e)}")
 
         subscriber = roslibpy.Topic(
             self.client,
@@ -56,7 +51,7 @@ class ROSClient:
         )
         subscriber.subscribe(wrapped_callback)
         self.subscribers[topic_name] = subscriber
-        logger.info(f"Subscribed to {topic_name}")
+        cfg.logger.info(f"Subscribed to {topic_name}")
 
     def create_publisher(self, topic_name, msg_type, message_data):
         """
@@ -81,21 +76,6 @@ class ROSClient:
         service = roslibpy.Service(self.client, service_name, service_type)
         request = roslibpy.ServiceRequest()
         result = service.call(request)
-        logger.info(f"Service {type(result)} called")
+        cfg.logger.info(f"Service {type(result)} called")
         
         return result['organ']
-    
-    def _log_callback(message):
-        log_levels = {
-            20: logging.INFO,
-            40: logging.ERROR
-        }
-
-        # Check if the message is from rosbridge_server, for example by checking the 'name' field
-        if 'rosbridge_websocket' in message.get('name', ''):
-            # The 'level' field indicates the log level (INFO, WARN, ERROR, etc.)
-            log_level = log_levels.get(message['level'], logging.DEBUG)
-            logger.log(log_level, message['msg'])
-        else:
-            # You can also handle other logs
-            pass

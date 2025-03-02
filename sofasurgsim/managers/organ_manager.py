@@ -1,4 +1,3 @@
-import logging
 import Sofa
 import Sofa.Core
 import Sofa.Simulation
@@ -6,18 +5,15 @@ import time
 
 from sofasurgsim.msg.Organ import Organ, Displacement, DeformationUpdate
 from sofasurgsim.interfaces.ros_interface import ROSClient
-from config import base_config
+from config.base_config import config as cfg
 
-# Configuriamo il logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+
 
 class OrganManager(Sofa.Core.Controller):
     def __init__(self, *args, root_node, created_organs_node,ros_client: ROSClient, **kwargs):
         super().__init__(*args, **kwargs)
         self.root_node = root_node
         self.ros_client = ros_client
-        self.bs = base_config.BaseConfig()
         self.sofa_nodes = created_organs_node
         self.record_surface_positions = self.extract_surface_positions() # Estraiamo le posizioni delle mesh superficiale attuali
 
@@ -68,7 +64,7 @@ class OrganManager(Sofa.Core.Controller):
 
                 # Check if the number of vertices matches
                 if len(prev_verts) != len(current_verts):
-                    print(f"Warning: Number of vertices for node {node_name} has changed. Skipping this node.")
+                    cfg.logger.warning(f"Number of vertices for node {node_name} has changed. Skipping this node.")
                     continue
 
                 # Compute displacements
@@ -90,7 +86,7 @@ class OrganManager(Sofa.Core.Controller):
                     deformation_update = DeformationUpdate(timestamp=timestamp, node_name=node_name, vertex_ids=vertex_ids, displacements=displacements)
                     deformation_updates.append(deformation_update)
                 else:
-                    print(f"No displacements for node {node_name}")
+                    cfg.logger.debug(f"No deformation detected for node {node_name}")
 
         return deformation_updates
     
