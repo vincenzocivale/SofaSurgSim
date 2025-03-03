@@ -1,6 +1,3 @@
-ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+roslaunch rosbridge_server rosbridge_websocket.launch
 
-cd ~/SofaSurgSim
-source .venv/bin/activate
-python scripts/organ_publisher.py 
-
+rosrun sofa_surgical_msgs get_organ_service.py

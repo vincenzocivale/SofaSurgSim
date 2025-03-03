@@ -15,7 +15,7 @@ class OrganManager(Sofa.Core.Controller):
         self.root_node = root_node
         self.ros_client = ros_client
         self.sofa_nodes = created_organs_node
-        self.record_surface_positions = self.extract_surface_positions() # Estraiamo le posizioni delle mesh superficiale attuali
+        self.record_surface_positions = self.extract_tetrahedral_positions() # Estraiamo le posizioni delle mesh superficiale attuali
 
     
     def extract_surface_positions(self):
@@ -44,6 +44,25 @@ class OrganManager(Sofa.Core.Controller):
                 print(f"Node {str(node.name)} has no 'Visu' child node")
 
         return surface_positions
+    
+    def extract_tetrahedral_positions(self):
+        """
+        Extract the tetrahedral mesh positions from a list of SOFA nodes.
+
+        :param sofa_nodes: List of SOFA nodes.
+        :return: Dictionary with node names as keys and lists of tetrahedral positions as values.
+        """
+        tetrahedral_positions = {}
+
+        for node in self.sofa_nodes:
+            mech_obj = node.getObject('dofs')
+            if mech_obj:
+                tetrahedral_positions[node.name.value] = mech_obj.position.array().copy()  
+            else:
+                cfg.logger.error(f"Nessun MechanicalObject 'dofs' trovato in {node.name.value}")
+
+        return tetrahedral_positions
+        
 
     
     def compute_deformation_updates(self, prev_positions: dict, current_positions: dict):
@@ -85,8 +104,11 @@ class OrganManager(Sofa.Core.Controller):
                     timestamp = time.time()
                     deformation_update = DeformationUpdate(timestamp=timestamp, node_name=node_name, vertex_ids=vertex_ids, displacements=displacements)
                     deformation_updates.append(deformation_update)
+                    cfg.logger.debug(f"Deformation detected for node {node_name}")
                 else:
-                    cfg.logger.debug(f"No deformation detected for node {node_name}")
+                    cfg.logger.info(f"No deformation detected for node {node_name}")
+            else:
+                cfg.logger.warning(f"Node {node_name} not found in previous positions. Skipping this node")
 
         return deformation_updates
     
@@ -108,11 +130,11 @@ class OrganManager(Sofa.Core.Controller):
         Called at the beginning of each simulation step.
         """
         # Extract current surface positions
-        current_positions = self.extract_surface_positions()
+        current_positions = self.extract_tetrahedral_positions()
 
         # Compute deformation updates if previous positions are available
         if self.record_surface_positions:
-            deformation_updates = self.compute_deformation_updates(self.record_surface_positions, current_positions)
+            deformation_updates = self.compute_deformation_updates(current_positions=current_positions, prev_positions=self.record_surface_positions)
             self.process_deformation_updates(deformation_updates)
             self.record_surface_positions = current_positions
 

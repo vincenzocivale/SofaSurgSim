@@ -100,6 +100,8 @@ class SOFASceneController:
         organ_node.addObject('TetrahedralCorotationalFEMForceField', template="Vec3d", name="FEM", method="large", poissonRatio="0.3", youngModulus="3000", computeGlobalMatrix="0")
         organ_node.addObject('FixedConstraint', name="FixedConstraint", indices="3 39 64")
 
+        # organ_node.addObject('MouseInteractor', name="MouseInteractor", template="Vec3d", button=0)
+
         visu = organ_node.addChild('Visu')
 
         visu.addObject('TriangleSetTopologyContainer', name="surface_topo",
@@ -109,6 +111,6 @@ class SOFASceneController:
                     position=" ".join(f"{v.x} {v.y} {v.z}" for v in surface_mesh.vertices))
 
         visu.addObject('OglModel', name="VisualModel", src="@surface_topo", color="1 0 0 1")
-        visu.addObject('BarycentricMapping', name="VisualMapping", input="@../dofs", output="@visual_dofs")    
+        visu.addObject('BarycentricMapping', name="VisualMapping", input="@../dofs", output="@visual_dofs")  
 
         return organ_node
