@@ -17,11 +17,12 @@ class OrganManager(Sofa.Core.Controller):
 
     def _get_mechanical_object(self, node):
         """Retrieve the mechanical object from a SOFA node"""
-        mech_obj = node.getObject('dofs')
+        visu_node = node.getChild('Visual')
+        mech_obj = visu_node.getObject('visual_dofs')
         if not mech_obj:
             cfg.logger.error(f"Missing 'dofs' MechanicalObject in node {node.name.value}")
         return mech_obj
-
+    
     def _get_initial_positions(self):
         """Capture initial positions of all organs"""
         return {

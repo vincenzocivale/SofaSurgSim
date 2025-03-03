@@ -102,7 +102,7 @@ class SOFASceneController:
 
         # organ_node.addObject('MouseInteractor', name="MouseInteractor", template="Vec3d", button=0)
 
-        visu = organ_node.addChild('Visu')
+        visu = organ_node.addChild('Visual')
 
         visu.addObject('TriangleSetTopologyContainer', name="surface_topo",
                     triangles=" ".join(" ".join(map(str, tri.vertex_indices)) for tri in surface_mesh.triangles))
