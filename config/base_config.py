@@ -21,5 +21,8 @@ class BaseConfig:
     ORGANS_SERVICE = '/get_organ'
     ORGANS_SERVICE_TYPE = 'sofa_surgical_msgs/GetOrgan'
 
+    DEFORMATION_THRESHOLD = 0
+
+
 config = BaseConfig()
 
