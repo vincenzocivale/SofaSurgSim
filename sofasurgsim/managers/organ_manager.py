@@ -13,7 +13,7 @@ class OrganManager(Sofa.Core.Controller):
         self.ros_client = ros_client
         self.sofa_nodes = created_organs_node
         self.reference_positions = self._get_initial_positions()
-        self.deformation_threshold = cfg.DEFORMATION_THRESHOLD  # Suggested config value
+        self.deformation_threshold = cfg.DEFORMATION_THRESHOLD  
 
     def _get_mechanical_object(self, node):
         """Retrieve the mechanical object from a SOFA node"""
@@ -40,9 +40,12 @@ class OrganManager(Sofa.Core.Controller):
                 continue
                 
             disp_vectors = current - reference
-            indices = np.arange(len(disp_vectors)).tolist()
+            magnitude = np.linalg.norm(disp_vectors, axis=1)
+            indices = np.where(magnitude > self.deformation_threshold)[0].tolist()
+            filtered_disp_vectors = disp_vectors[indices]
             
-            displacements[name] = (indices, disp_vectors)
+            if indices:
+                displacements[name] = (indices, filtered_disp_vectors)
         
         return displacements
 
