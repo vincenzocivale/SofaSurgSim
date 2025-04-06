@@ -8,7 +8,7 @@ class BaseConfig:
     logger = logging.getLogger(__name__)
     
     # Parametri ROS
-    ROS_HOST = 'localhost'
+    ROS_HOST = '172.24.95.73'
     ROS_PORT = 9090
 
     # Parametri SOFA

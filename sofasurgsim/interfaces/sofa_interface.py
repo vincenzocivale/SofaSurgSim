@@ -3,8 +3,10 @@ import Sofa
 import Sofa.Gui
 from config.base_config import config as cfg
 from sofasurgsim.managers.organ_manager import OrganManager
+from sofasurgsim.managers.robot_manager import RobotManager
 from sofasurgsim.interfaces.ros_interface import ROSClient
 from sofasurgsim.msg.Organ import Organ
+from sofasurgsim.msg.Robot import Robot
     
 class SOFASceneController:
     def __init__(self, ros_client: ROSClient):
@@ -56,7 +58,15 @@ class SOFASceneController:
         organ = Organ.from_dict(organ_msg)
         organ_node = self.create_sofa_nodes_from_meshes(organ.id, organ.surface, organ.tetrahedral_mesh)
 
+        robot_msg = self.ros_client.use_service(cfg.ROBOT_SERVICE, cfg.ROBOT_SERVICE_TYPE) 
+        robot_node = self.create_robot_node(robot_msg)
+        
+        # Enable collision between robot and organ
+        robot_node.addObject('CollisionGroup', name="robot_collision_group")
+        organ_node.addObject('CollisionGroup', name="organ_collision_group")
+        
         self.root_node.addObject(OrganManager(root_node=self.root_node, created_organs_node=[organ_node], ros_client=self.ros_client))
+        self.root_node.addObject(RobotManager(root_node=self.root_node, robot_node=robot_node, ros_client=self.ros_client))
 
         return self.root_node
 
@@ -114,3 +124,41 @@ class SOFASceneController:
         visu.addObject('BarycentricMapping', name="VisualMapping", input="@../dofs", output="@visual_dofs")  
 
         return organ_node
+    
+    def create_robot_node(self, robot_msg):
+        """Create a SOFA node for a rigid robot from its custom message."""
+        robot_node = self.root_node.addChild(robot_msg.name)
+
+        # Rigid mechanics for the robot
+        robot_node.addObject('MechanicalObject', 
+                            template="Rigid3d", 
+                            position="0 0 0 0 0 0 1",  
+                            name="robot_dofs")
+
+        # Add visual/collision meshes for each link (from robot_msg)
+        for link in robot_msg.links:
+            link_node = robot_node.addChild(link.name)
+            
+            # Visual mesh (mapped to robot_dofs)
+            visual_node = link_node.addChild("Visual")
+            visual_node.addObject('MeshOBJLoader', 
+                                 filename=link.visual_mesh_path, 
+                                 name="visual_loader")
+            visual_node.addObject('OglModel', 
+                                src="@visual_loader", 
+                                color="0.8 0.8 0.8 1")
+            visual_node.addObject('RigidMapping', 
+                                input="@../../robot_dofs", 
+                                output="@./")
+
+            # Collision mesh (required for interaction)
+            collision_node = link_node.addChild("Collision")
+            collision_node.addObject('MeshOBJLoader', 
+                                   filename=link.collision_mesh_path, 
+                                   name="collision_loader")
+            collision_node.addObject('TriangleCollisionModel')  # For surface collisions
+            collision_node.addObject('RigidMapping', 
+                                   input="@../../robot_dofs", 
+                                   output="@./")
+
+        return robot_node
