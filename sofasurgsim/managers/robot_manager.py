@@ -12,8 +12,8 @@ class RobotManager(Sofa.Core.Controller):
 
         # Subscribe to ROS joint targets
         self.ros_client.subscribe(
-            '/robot/joint_targets',
-            'sensor_msgs/JointState',
+            cfg.ROBOT_JOINT_TOPIC,
+            cfg.ROBOT_JOINT_TOPIC_TYPE,
             self._update_joint_command
         )
 

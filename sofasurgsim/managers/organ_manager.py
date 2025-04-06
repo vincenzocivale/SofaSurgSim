@@ -7,7 +7,7 @@ from sofasurgsim.interfaces.ros_interface import ROSClient
 from config.base_config import config as cfg
 
 class OrganManager(Sofa.Core.Controller):
-    def __init__(self, *args, root_node, created_organs_node,ros_client: ROSClient, **kwargs):
+    def __init__(self, *args, root_node, created_organs_node, ros_client: ROSClient, **kwargs):
         super().__init__(*args, **kwargs)
         self.root_node = root_node
         self.ros_client = ros_client
