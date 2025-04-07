@@ -3,7 +3,7 @@ from Organ import Point,  Pose,  Mesh, TetrahedralMesh
 
 class RobotLink:
     """Class representing a robot link with visual and collision meshes."""
-    def __init__(self, name: str, pose: Pose, visual_mesh: Mesh, collision_mesh: TetrahedralMesh = None):
+    def __init__(self, name: str, pose: Pose, visual_mesh: Mesh, collision_mesh: Mesh = None):
         self.name = name
         self.pose = pose
         self.visual_mesh = visual_mesh
