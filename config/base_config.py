@@ -23,6 +23,9 @@ class BaseConfig:
 
     DEFORMATION_THRESHOLD = 0.001
 
+    ROBOT_SERVICE = '/load_robot_from_urdf'
+    ROBOT_SERVICE_TYPE = 'sofa_surgical_msgs/LoadRobotFromURDF'
+
 
 config = BaseConfig()
 

@@ -1,5 +1,5 @@
 from typing import List
-from Organ import Point,  Pose,  Mesh, TetrahedralMesh
+from .Organ import Point,  Pose,  Mesh, TetrahedralMesh
 
 class RobotLink:
     """Class representing a robot link with visual and collision meshes."""
