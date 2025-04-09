@@ -1,3 +1,5 @@
 roslaunch rosbridge_server rosbridge_websocket.launch
 
 rosrun sofa_surgical_msgs get_organ_service.py
+
+rosrun sofa_surgical_msgs robot_service_server.py

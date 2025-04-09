@@ -3,9 +3,8 @@ from .Organ import Point,  Pose,  Mesh, TetrahedralMesh
 
 class RobotLink:
     """Class representing a robot link with visual and collision meshes."""
-    def __init__(self, name: str, pose: Pose, visual_mesh: Mesh, collision_mesh: Mesh = None):
+    def __init__(self, name: str, visual_mesh: Mesh, collision_mesh: Mesh = None):
         self.name = name
-        self.pose = pose
         self.visual_mesh = visual_mesh
         self.collision_mesh = collision_mesh
 
@@ -13,7 +12,6 @@ class RobotLink:
         """Converts the RobotLink object to a dictionary."""
         return {
             'name': self.name,
-            'pose': self.pose.to_dict(),
             'visual_mesh': self.visual_mesh.to_dict(),
             'collision_mesh': self.collision_mesh.to_dict() if self.collision_mesh else None
         }
@@ -21,12 +19,10 @@ class RobotLink:
     @staticmethod
     def from_dict(data):
         """Creates a RobotLink object from a dictionary."""
-        pose = Pose.from_dict(data['pose'])
         visual_mesh = Mesh.from_dict(data['visual_mesh'])
         collision_mesh = Mesh.from_dict(data['collision_mesh']) if data.get('collision_mesh') else None
         return RobotLink(
             name=data['name'],
-            pose=pose,
             visual_mesh=visual_mesh,
             collision_mesh=collision_mesh
         )

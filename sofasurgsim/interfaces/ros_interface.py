@@ -66,16 +66,17 @@ class ROSClient:
         talker.publish(roslibpy.Message(message_data))
         talker.unadvertise()
 
-    def use_service(self, service_name, service_type):
+    def use_service(self, service_name, service_type, key_word):
         """
         Use a service.
         Args:
             service_name (str): Service name
             service_type (str): ROS service type
+            key_word (str): Keyword to identify the object of return message (organ, robot, etc.)
         """
         service = roslibpy.Service(self.client, service_name, service_type)
         request = roslibpy.ServiceRequest()
         result = service.call(request)
         cfg.logger.info(f"Service {type(result)} called")
         
-        return result['organ']
+        return result[key_word]

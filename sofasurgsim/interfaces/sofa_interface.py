@@ -54,12 +54,14 @@ class SOFASceneController:
 
 
 
-        organ_msg = self.ros_client.use_service(cfg.ORGANS_SERVICE, cfg.ORGANS_SERVICE_TYPE)
+        organ_msg = self.ros_client.use_service(cfg.ORGANS_SERVICE, cfg.ORGANS_SERVICE_TYPE, 'organ')
         organ = Organ.from_dict(organ_msg)
         organ_node = self.create_sofa_nodes_from_meshes(organ.id, organ.surface, organ.tetrahedral_mesh)
 
-        robot_msg = self.ros_client.use_service(cfg.ROBOT_SERVICE, cfg.ROBOT_SERVICE_TYPE) 
-        robot_node = self.create_robot_node(robot_msg)
+        robot_msg = self.ros_client.use_service(cfg.ROBOT_SERVICE, cfg.ROBOT_SERVICE_TYPE, 'robot') 
+        
+        robot = Robot.from_dict(robot_msg)
+        robot_node = self.create_robot_node(robot)
         
         # Enable collision between robot and organ
         robot_node.addObject('CollisionGroup', name="robot_collision_group")
@@ -141,24 +143,26 @@ class SOFASceneController:
             
             # Visual mesh (mapped to robot_dofs)
             visual_node = link_node.addChild("Visual")
-            visual_node.addObject('MeshOBJLoader', 
-                                 filename=link.visual_mesh_path, 
-                                 name="visual_loader")
-            visual_node.addObject('OglModel', 
-                                src="@visual_loader", 
-                                color="0.8 0.8 0.8 1")
-            visual_node.addObject('RigidMapping', 
-                                input="@../../robot_dofs", 
-                                output="@./")
+            visual_node.addObject('TriangleSetTopologyContainer', name="surface_topo",
+                    triangles=" ".join(" ".join(map(str, tri.vertex_indices)) for tri in link.visual_mesh.triangles))
+            
+            visual_node.addObject('MechanicalObject', name="visual_dofs", 
+                    position=" ".join(f"{v.x} {v.y} {v.z}" for v in link.visual_mesh.vertices))
+
+            visual_node.addObject('OglModel', name="VisualModel", src="@surface_topo", color="0 1 0 1")
+       
+            visual_node.addObject('BarycentricMapping', name="VisualMapping", input="@../dofs", output="@visual_dofs")  
 
             # Collision mesh (required for interaction)
+
             collision_node = link_node.addChild("Collision")
-            collision_node.addObject('MeshOBJLoader', 
-                                   filename=link.collision_mesh_path, 
-                                   name="collision_loader")
-            collision_node.addObject('TriangleCollisionModel')  # For surface collisions
-            collision_node.addObject('RigidMapping', 
-                                   input="@../../robot_dofs", 
-                                   output="@./")
+            collision_node.addObject('TriangleSetTopologyContainer', name="collision_topo",
+                    triangles=" ".join(" ".join(map(str, tri.vertex_indices)) for tri in link.collision_mesh.triangles))
+            collision_node.addObject('MechanicalObject', name="collision_dofs",
+                    position=" ".join(f"{v.x} {v.y} {v.z}" for v in link.collision_mesh.vertices))
+            
+            collision_node.addObject('TriangleCollisionModel', name="CollisionModel", src="@collision_topo")
+            collision_node.addObject('BarycentricMapping', name="CollisionMapping", input="@../dofs", output="@collision_dofs")
+
 
         return robot_node
