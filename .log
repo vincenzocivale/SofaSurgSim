@@ -2221,3 +2221,15 @@
 
 --- NEW SESSION: 12/03/2025 14:19:12 ---
 /liver/Visual/visual_dofs.showColor = 1 1 1 1
+
+--- NEW SESSION: 09/04/2025 16:34:50 ---
+/robot/main_insertion_link/main_insertion_link_dofs.showColor = 1 1 1 1
+/robot/base_link/base_link_dofs.showColor = 1 1 1 1
+/robot/pitch_bottom_link/pitch_bottom_link_dofs.showColor = 1 1 1 1
+/robot/pitch_end_link/pitch_end_link_dofs.showColor = 1 1 1 1
+/robot/main_insertion_link/Visual/visual_dofs.showColor = 1 1 1 1
+
+--- NEW SESSION: 09/04/2025 17:59:06 ---
+/robot/base_link/dof.showColor = 1 1 1 1
+/robot/world/dof.showColor = 1 1 1 1
+/robot/main_insertion_link/dof.showColor = 1 1 1 1

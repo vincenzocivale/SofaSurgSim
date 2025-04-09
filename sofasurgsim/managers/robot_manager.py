@@ -10,12 +10,12 @@ class RobotManager(Sofa.Core.Controller):
         self.robot_node = robot_node
         self.latest_joint_command = None  # Store incoming ROS commands
 
-        # Subscribe to ROS joint targets
-        self.ros_client.subscribe(
-            cfg.ROBOT_JOINT_TOPIC,
-            cfg.ROBOT_JOINT_TOPIC_TYPE,
-            self._update_joint_command
-        )
+        # # Subscribe to ROS joint targets
+        # self.ros_client.subscribe(
+        #     cfg.ROBOT_JOINT_TOPIC,
+        #     cfg.ROBOT_JOINT_TOPIC_TYPE,
+        #     self._update_joint_command
+        # )
 
     def _update_joint_command(self, msg):
         """Callback for ROS joint commands"""
